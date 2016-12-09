@@ -8,6 +8,9 @@ public class PredectConstants {
     //Log tag
     public static final String LOG_TAG = "LOG_PREDECT";
 
+    //Log path
+    public static final String LOG_PATH = "/sdcard/";
+
     //Error messages
     public static final String SLEEP_ERROR = "Error at Thread Sleep in NetworkObserverService";
 
@@ -20,10 +23,15 @@ public class PredectConstants {
     //Constant used to get result receiver object at NetworkObserverService class
     public static final String RESULT_RECEIVER = "RESULT_RECEIVER";
 
-    //Action for start the NetworkObserverService
-    public static final String ACTION_SERVICE = "danielfilho.ufc.br.com.predetect.networkservice";
+    //Action for WakefulBroadcast
+    public static final String ACTION_SERVICE_WAKEFUL_BROADCAST = "danielfilho.ufc.br.com.predetect.wakefulbroadcast";
+
+    //Action for start NetworkObserverService
+    public static final String ACTION_START_OBSERVING_SERVICE = "danielfilho.ufc.br.com.predetect.networkservice";
 
     //Action when NetworkObserverService ends to observing a network
     public static final String ACTION_OBSERVING_ENDS = "danielfilho.ufc.br.com.predetect.OBSERVING_ENDS";
+
+    public static final String BUNDLE_FINISH_OBSERVING = "BUNDLE_FINISH_OBSERVING";
 
 }

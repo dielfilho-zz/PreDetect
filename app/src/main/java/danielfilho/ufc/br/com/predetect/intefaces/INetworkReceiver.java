@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 
 /**
- * Created by whoami on 6/12/16.
+ * Created by Daniel Filho on 6/12/16.
  */
 public interface INetworkReceiver {
     void onNetworkReceive(Context context, Intent intent);

@@ -6,7 +6,10 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
+import com.elvishew.xlog.XLog;
+
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +32,8 @@ public class NetworkManager implements INetworkReceiver{
 
     private List<NetworkListener> listeners;
 
+    private WifiManager.WifiLock wifiLock = null;
+
     public static NetworkManager getInstance(){
         if(instance == null){
             instance = new NetworkManager();
@@ -37,6 +42,7 @@ public class NetworkManager implements INetworkReceiver{
     }
 
     private NetworkManager() {
+        this.listeners = new ArrayList<NetworkListener>();
         this.listeners = new ArrayList<NetworkListener>();
     }
 
@@ -81,7 +87,7 @@ public class NetworkManager implements INetworkReceiver{
 
     private List<WiFiData> onWiFiListenerRegistered(Context context){
         WifiManager manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        List<ScanResult> resultList = manager.getScanResults();
+        List<ScanResult> resultList = manager.getScanResults() != null ? manager.getScanResults() : new ArrayList<ScanResult>();
         List<WiFiData> wiFiDatas = new ArrayList<>();
 
         if(resultList.size() > 0) {
@@ -100,10 +106,12 @@ public class NetworkManager implements INetworkReceiver{
     public static double rssiToDistance(int rssi){
 
         DecimalFormat decimalFormat = new DecimalFormat(".#");
+        DecimalFormatSymbols dfs = new DecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        decimalFormat.setDecimalFormatSymbols(dfs);
 
         double distance = Math.pow(10, (NetworkProperties.rssiAtOneMeter - rssi) / NetworkProperties.signalLoss);
-        distance = Double.parseDouble(decimalFormat.format(distance));
-        return distance;
+        return Double.parseDouble(decimalFormat.format(distance));
     }
 
     @Override
@@ -112,12 +120,49 @@ public class NetworkManager implements INetworkReceiver{
         if(WifiManager.RSSI_CHANGED_ACTION.equals(intent.getAction())) {
 
             WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+
             List<WiFiData> wifiList = new ArrayList<>();
             for (ScanResult result : wifiManager.getScanResults()) {
                 WiFiData wifi = new WiFiData(result.BSSID, result.level, rssiToDistance(result.level), result.SSID);
                 wifiList.add(wifi);
             }
             notifyWiFiListeners(wifiList);
+
+        }
+
+    }
+
+    public byte[] createWiFiBundle(List<String> wifiDatas, int duration, double distance){
+        WiFiBundle wiFiBundle = new WiFiBundle(wifiDatas, duration, distance);
+        return ParceableManager.toByteArray(wiFiBundle);
+    }
+
+
+    public void holdWifiLock(Context context){
+        if(wifiLock == null){
+            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, PredectConstants.LOG_TAG);
+        }
+
+        wifiLock.setReferenceCounted(false);
+
+        if(!wifiLock.isHeld())
+            wifiLock.acquire();
+
+        XLog.d(System.currentTimeMillis()+"|  -------------- ACQUIRE WIFI LOCK ------------");
+        Log.d(PredectConstants.LOG_TAG, "-------------- ACQUIRE WIFI LOCK ------------");
+
+    }
+
+    public void releaseWifiLock(){
+        if(wifiLock == null){
+            Log.d(PredectConstants.LOG_TAG, "-------------- WIFI LOCK WAS NOT CREATED ------------");
+            XLog.d(System.currentTimeMillis()+"|  -------------- WIFI LOCK WAS NOT CREATED ------------");
+        }else{
+            if(wifiLock.isHeld())
+                wifiLock.release();
+            Log.d(PredectConstants.LOG_TAG, "-------------- RELEASE WIFI LOCK ------------");
+            XLog.d(System.currentTimeMillis()+"|  -------------- RELEASE WIFI LOCK ------------");
 
         }
 

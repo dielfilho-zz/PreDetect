@@ -6,48 +6,44 @@ import android.os.Parcelable;
 /**
  * Created by Daniel Filho on 5/27/16.
  */
-public class WiFiData extends NetworkData implements Parcelable{
+public class WiFiData implements Parcelable{
     private String SSID;
+    private String MAC;
+    private double distance;
+    private int RSSI;
 
     private int observeCount;
     private double percent;
 
     public WiFiData(String MAC, int RSSI, double distance, String SSID) {
-        super(MAC, RSSI, distance);
+        this.MAC = MAC;
+        this.RSSI = RSSI;
         this.SSID = SSID;
+        this.distance = distance;
         this.observeCount = 0;
         this.percent = 0;
     }
 
     public WiFiData(String SSID, String MAC, int RSSI) {
-        super(MAC, RSSI);
+        this.MAC = MAC;
+        this.RSSI = RSSI;
         this.SSID = SSID;
         this.observeCount = 0;
         this.percent = 0;
     }
 
     public WiFiData(String MAC){
-        super(MAC, 0, 0);
+        this.MAC = MAC;
     }
 
     protected WiFiData(Parcel in) {
-        SSID = in.readString();
         MAC = in.readString();
+        RSSI = in.readInt();
+        SSID = in.readString();
+        distance = in.readDouble();
         observeCount = in.readInt();
         percent = in.readDouble();
     }
-
-    public static final Creator<WiFiData> CREATOR = new Creator<WiFiData>() {
-        @Override
-        public WiFiData createFromParcel(Parcel in) {
-            return new WiFiData(in);
-        }
-
-        @Override
-        public WiFiData[] newArray(int size) {
-            return new WiFiData[size];
-        }
-    };
 
     public String getSSID() {
         return SSID;
@@ -73,26 +69,28 @@ public class WiFiData extends NetworkData implements Parcelable{
         this.percent = percent;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if(o == this)
-            return true;
-        else if(!(o instanceof WiFiData))
-            return false;
-
-        WiFiData data = (WiFiData) o;
-        return (data.getMAC().equals(this.getMAC()));
-
+    public String getMAC() {
+        return MAC;
     }
 
-    @Override
-    public int hashCode() {
-        return getMAC() != null ? getMAC().hashCode() : 0;
+    public void setMAC(String MAC) {
+        this.MAC = MAC;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
+    public int getRSSI() {
+        return RSSI;
+    }
+
+    public void setRSSI(int RSSI) {
+        this.RSSI = RSSI;
     }
 
     @Override
@@ -107,9 +105,46 @@ public class WiFiData extends NetworkData implements Parcelable{
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(SSID);
         dest.writeString(MAC);
+        dest.writeInt(RSSI);
+        dest.writeString(SSID);
+        dest.writeDouble(distance);
         dest.writeInt(observeCount);
         dest.writeDouble(percent);
     }
+
+    public static final Creator<WiFiData> CREATOR = new Creator<WiFiData>() {
+        @Override
+        public WiFiData createFromParcel(Parcel in) {
+            return new WiFiData(in);
+        }
+
+        @Override
+        public WiFiData[] newArray(int size) {
+            return new WiFiData[size];
+        }
+    };
+
+    @Override
+    public int hashCode() {
+        return getMAC() != null ? getMAC().hashCode() : 0;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == this)
+            return true;
+        else if(!(o instanceof WiFiData))
+            return false;
+
+        WiFiData data = (WiFiData) o;
+        return (data.getMAC().equals(this.getMAC()));
+
+    }
+
 }

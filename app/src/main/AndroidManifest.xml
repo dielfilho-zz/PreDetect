@@ -1,12 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="danielfilho.ufc.br.com.predetect">
 
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
 
     <application
         android:allowBackup="true"
@@ -15,29 +14,28 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!--<meta-data android:name="force_old_scanning_api" android:value="true" />-->
-
-        <receiver android:name=".receivers.NetworkReceiver" android:enabled="true">
-            <intent-filter android:priority="1000">
-                <action android:name="android.net.wifi.RSSI_CHANGED" />
-            </intent-filter>
+        <receiver android:name=".receivers.ObservingReceiver" android:exported="true">
             <intent-filter>
-                <action android:name="danielfilho.ufc.br.com.predetect.OBSERVING_ENDS"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.bluetooth.device.action.FOUND" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.bluetooth.adapter.action.STATE_CHANGED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.bluetooth.adapter.action.DISCOVERY_FINISHED" />
+                <action android:name="danielfilho.ufc.br.com.predetect.wakefulbroadcast"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </receiver>
 
-        <service android:name=".services.NetworkObserverService">
+        <receiver android:name="danielfilho.ufc.br.com.predetect.receivers.NetworkReceiver" android:enabled="true" android:exported="true">
             <intent-filter android:priority="1000">
-                <action android:name=".constants.ACTION_SERVICE"/>
+                <action android:name="android.net.wifi.RSSI_CHANGED" />
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="danielfilho.ufc.br.com.predetect.OBSERVING_ENDS"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
+
+        <service android:name="danielfilho.ufc.br.com.predetect.services.NetworkObserverService" android:exported="true" android:enabled="true">
+            <intent-filter android:priority="100000">
+                <action android:name="danielfilho.ufc.br.com.predetect.networkservice"></action>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </service>
 
