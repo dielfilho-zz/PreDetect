@@ -34,7 +34,7 @@
 
         <service android:name="danielfilho.ufc.br.com.predetect.services.NetworkObserverService" android:exported="true" android:enabled="true">
             <intent-filter android:priority="100000">
-                <action android:name="danielfilho.ufc.br.com.predetect.networkservice"></action>
+                <action android:name="danielfilho.ufc.br.com.predetect.networkservice" />
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </service>

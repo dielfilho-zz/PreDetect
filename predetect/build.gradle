@@ -19,19 +19,6 @@ android {
     }
 }
 
-uploadArchives{
-    repositories{
-        mavenDeployer{
-            repository(url:"file:///home/whoami/Dropbox/UFC/TCC")
-
-            pom.groupId = GROUP
-            pom.artifactId = POM_ARTIFACT_ID
-            pom.version = VERSION_NAME
-        }
-    }
-}
-task install(dependsOn: uploadArchives)
-
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
