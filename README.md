@@ -1,5 +1,7 @@
 # PreDetect
 Uma API simples para desenvolvimento de aplicaçoes indoor.
+---
+[![Release](https://jitpack.io/v/dielfilho/predetect.svg)](https://jitpack.io/#dielfilho/PreDetect)
 
 #### VERSAO 1.1.0:
 Listar as informações (MAC, SSID, RSSI, Distância aproximada) de todas as redes Wi-Fi próximas ao dispositivo.
@@ -23,7 +25,7 @@ allprojects {
 
 ```gradle
 dependencies {
-	compile 'danielfilho.ufc.br.com:predetect:1.1.0'
+	compile 'com.github.danielfilho:predetect:1.1.0'
 }
 ```
 
