@@ -1,6 +1,8 @@
 # PreDetect
 Uma API simples para desenvolvimento de aplicaçoes indoor.
+
 ---
+
 [![Release](https://jitpack.io/v/dielfilho/predetect.svg)](https://jitpack.io/#dielfilho/PreDetect)
 
 #### VERSAO 1.1.0:
