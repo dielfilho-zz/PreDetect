@@ -180,6 +180,4 @@ public class NetworkManager implements INetworkReceiver{
         }
     }
 
-
-
 }

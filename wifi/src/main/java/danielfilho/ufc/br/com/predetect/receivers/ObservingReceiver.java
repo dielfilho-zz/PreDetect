@@ -1,8 +1,8 @@
 package danielfilho.ufc.br.com.predetect.receivers;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 
 import com.elvishew.xlog.LogLevel;
@@ -11,6 +11,7 @@ import com.elvishew.xlog.printer.file.FilePrinter;
 
 import danielfilho.ufc.br.com.predetect.services.NetworkObserverService;
 
+import static android.support.v4.content.WakefulBroadcastReceiver.startWakefulService;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.ACTION_SERVICE_WAKEFUL_BROADCAST;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_PATH;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_TAG;
@@ -20,7 +21,7 @@ import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI
  * Created by Daniel Filho on 11/17/16.
  */
 
-public class ObservingReceiver extends WakefulBroadcastReceiver {
+public class ObservingReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -35,6 +36,7 @@ public class ObservingReceiver extends WakefulBroadcastReceiver {
                 Log.d(LOG_TAG, "-------------- PRE DETECT : ON BROADCAST  -----------");
                 Intent observingIntent = new Intent(context, NetworkObserverService.class);
                 observingIntent.putExtra(WIFI_BUNDLE, intent.getByteArrayExtra(WIFI_BUNDLE));
+
                 startWakefulService(context, observingIntent);
             } else {
                 Log.e(LOG_TAG, "-------------- THE BUNDLE ON WIFI OBSERVING IS NULL -----------");
