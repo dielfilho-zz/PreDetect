@@ -1,1 +1,1 @@
-include ':wifi'
+include ':wifi', ':ble'
