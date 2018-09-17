@@ -28,7 +28,7 @@ import br.ufc.predetect.ble.utils.calculateVariance
  * distribution over the variables for each time frame.
  *
  *
- * Since RSSI signals are largely influenced by signal noise, taking samples from the signal seems
+ * Since RSSi signals are largely influenced by signal noise, taking samples from the signal seems
  * likely to be beneficial. Evaluate Unscented Kalman filter
  *
  * @see <https://en.wikipedia.org/wiki/Kalman_filter> Kalman Filter
