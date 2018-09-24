@@ -53,7 +53,6 @@ public class NetworkObserverService extends Service implements Runnable{
 
     private Intent wakefulIntent;
 
-    private PowerManager powerManager;
     private PowerManager.WakeLock wakeLock;
 
     @Override
@@ -72,7 +71,7 @@ public class NetworkObserverService extends Service implements Runnable{
             XLog.e(e.getMessage());
         }
 
-        this.powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        final PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 
         if (powerManager != null) {
             this.wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OBSERVING_WAKE_LOCK");
