@@ -4,7 +4,10 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by Daniel Filho on 5/27/16.
+ *
+ * @author Daniel Filho
+ * @since 2016
+ *
  */
 public class WiFiData implements Parcelable{
     private String SSID;

@@ -12,5 +12,5 @@ import android.content.Intent
  *
  */
 interface NetworkReceiver {
-    fun onNetworkReceive(context: Context, intent: Intent)
+    fun onNetworkReceive(context: Context?, intent: Intent?)
 }

@@ -11,6 +11,7 @@ import android.os.Parcelable
  * @updated Gabriel Cesar, 2018
  *
  */
+
 fun toByteArray(parcelable: Parcelable): ByteArray {
     val parcel = Parcel.obtain()
 

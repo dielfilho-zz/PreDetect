@@ -8,8 +8,8 @@ package br.ufc.quixada.predetect.common.properties
  * @updated Gabriel Cesar, 2018
  *
  */
-object NetworkProperties {
-    val rssiAtOneMeter = -38
-    val signalLoss = 10 * 3.5
-}
+
+const val rssiAtOneMeter = -38
+const val signalLoss = 10 * 3.5
+
 

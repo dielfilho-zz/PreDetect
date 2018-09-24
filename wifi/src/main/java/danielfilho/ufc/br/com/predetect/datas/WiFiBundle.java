@@ -7,7 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Daniel Filho on 6/6/16.
+ *
+ * @author Daniel Filho
+ * @since 2016
+ *
  */
 public class WiFiBundle implements Parcelable{
     private List<String> wifiData;

@@ -3,8 +3,8 @@ package br.ufc.quixada.predetect.common.managers
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 
 open class NetworkResult<T> (
-        val resultCode: NetworkResultStatus,
-        val dataListener : List<T>
+        private val resultCode: NetworkResultStatus,
+        val dataListener : List<T>?
 ) {
 
     fun onSuccess(action : () -> Unit) : NetworkResult<T> {
