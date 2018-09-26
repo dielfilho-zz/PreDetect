@@ -21,11 +21,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
+import br.ufc.quixada.predetect.common.utils.ParcelableUtilsKt;
 import danielfilho.ufc.br.com.predetect.datas.WiFiBundle;
 import danielfilho.ufc.br.com.predetect.datas.WiFiData;
 import danielfilho.ufc.br.com.predetect.managers.NetworkManager;
-import danielfilho.ufc.br.com.predetect.managers.ParceableManager;
 import danielfilho.ufc.br.com.predetect.receivers.ObservingReceiver;
+import danielfilho.ufc.br.com.predetect.utils.NetworkUtils;
 
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.ACTION_OBSERVING_ENDS;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.BUNDLE_FINISH_OBSERVING;
@@ -37,13 +39,14 @@ import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI_SCANNED;
 
 /**
- * Created by Daniel Filho on 5/31/16.
+ *
+ * @author Daniel Filho
+ * @since 2016
+ *
+ * Updated by Gabriel Cesar, 2018
+ *
  */
-public class NetworkObserverService extends Service implements Runnable{
-
-    public static final int SERVICE_SUCCESS = 1;
-    public static final int SERVICE_FAIL = 2;
-    public static final int SERVICE_NO_WIFI = 3;
+public class NetworkObserverService extends Service implements Runnable {
 
     private WifiManager wifiManager;
     private WiFiBundle wiFiBundle;
@@ -53,7 +56,6 @@ public class NetworkObserverService extends Service implements Runnable{
 
     private Intent wakefulIntent;
 
-    private PowerManager powerManager;
     private PowerManager.WakeLock wakeLock;
 
     @Override
@@ -72,7 +74,7 @@ public class NetworkObserverService extends Service implements Runnable{
             XLog.e(e.getMessage());
         }
 
-        this.powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        final PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 
         if (powerManager != null) {
             this.wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OBSERVING_WAKE_LOCK");
@@ -117,7 +119,7 @@ public class NetworkObserverService extends Service implements Runnable{
     private void initBundle(Intent intent){
         try {
 
-            wiFiBundle = ParceableManager.toParcelable(intent.getByteArrayExtra(WIFI_BUNDLE), WiFiBundle.CREATOR);
+            wiFiBundle = ParcelableUtilsKt.toParcelable(intent.getByteArrayExtra(WIFI_BUNDLE), WiFiBundle.CREATOR);
             networkResultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
             if(wiFiBundle != null) {
                 new Thread(this).start();
@@ -126,8 +128,9 @@ public class NetworkObserverService extends Service implements Runnable{
             }else{
                 Log.d(LOG_TAG, "--------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
                 XLog.d(System.currentTimeMillis()+"|  --------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
-                if(networkResultReceiver != null){
-                    networkResultReceiver.send(SERVICE_FAIL, null);
+
+                if (networkResultReceiver != null) {
+                    networkResultReceiver.send(NetworkResultStatus.FAIL.getValue(), null);
                 }
             }
         }catch (Exception e){
@@ -140,8 +143,8 @@ public class NetworkObserverService extends Service implements Runnable{
         for(ScanResult sr : scanResults){
             WiFiData temp = new WiFiData(sr.BSSID);
 
-            if(!hashWifi.contains(temp)) {
-                double resultDistance = NetworkManager.rssiToDistance(sr.level);
+            if (!hashWifi.contains(temp)) {
+                double resultDistance = NetworkUtils.rssiToDistance(sr.level);
                 WiFiData data = new WiFiData(sr.BSSID, sr.level, resultDistance, sr.SSID);
                 XLog.d(sr.BSSID+","+ sr.SSID+","+sr.level+","+resultDistance);
                 hashWifi.add(data);
@@ -195,14 +198,14 @@ public class NetworkObserverService extends Service implements Runnable{
                     Log.e(LOG_TAG, SLEEP_ERROR);
 
                     if(networkResultReceiver != null)
-                        networkResultReceiver.send(SERVICE_FAIL, null);
+                        networkResultReceiver.send(NetworkResultStatus.FAIL.getValue(), null);
                 }
 
                 observedTime++;
 
             }else{
                 if(networkResultReceiver != null)
-                    networkResultReceiver.send(SERVICE_NO_WIFI, null);
+                    networkResultReceiver.send(NetworkResultStatus.UNDEFINED.getValue(), null);
                 //If there's no WIFI on ScanResults, stopping service.
                 stopSelf();
             }
@@ -220,7 +223,7 @@ public class NetworkObserverService extends Service implements Runnable{
         bundle.putParcelableArrayList(WIFI_SCANNED, (ArrayList<? extends Parcelable>) wiFiDatas);
 
         if(networkResultReceiver != null)
-            networkResultReceiver.send(SERVICE_SUCCESS, bundle);
+            networkResultReceiver.send(NetworkResultStatus.SUCCESS.getValue(), bundle);
 
         //Send the intent for the broadcasts receivers
         Intent intent = new Intent(ACTION_OBSERVING_ENDS);

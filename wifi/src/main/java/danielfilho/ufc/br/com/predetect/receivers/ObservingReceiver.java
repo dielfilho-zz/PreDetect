@@ -1,8 +1,8 @@
 package danielfilho.ufc.br.com.predetect.receivers;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 
 import com.elvishew.xlog.LogLevel;
@@ -11,17 +11,18 @@ import com.elvishew.xlog.printer.file.FilePrinter;
 
 import danielfilho.ufc.br.com.predetect.services.NetworkObserverService;
 
-import static android.support.v4.content.WakefulBroadcastReceiver.startWakefulService;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.ACTION_SERVICE_WAKEFUL_BROADCAST;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_PATH;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_TAG;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI_BUNDLE;
 
 /**
- * Created by Daniel Filho on 11/17/16.
+ *
+ * @author Daniel Filho
+ * @since 2016
+ *
  */
-
-public class ObservingReceiver extends BroadcastReceiver {
+public class ObservingReceiver extends WakefulBroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {

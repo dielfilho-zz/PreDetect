@@ -3,7 +3,10 @@ package danielfilho.ufc.br.com.predetect.constants;
 import android.os.Environment;
 
 /**
- * Created by whoami on 5/31/16.
+ *
+ * @author Daniel Filho
+ * @since 2016
+ *
  */
 public class PreDetectConstants{
 

@@ -5,17 +5,22 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import danielfilho.ufc.br.com.predetect.intefaces.INetworkReceiver;
+import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver;
 import danielfilho.ufc.br.com.predetect.managers.NetworkManager;
 
 /**
- * Created by Daniel Filho on 6/2/16.
+ *
+ * @author Daniel Filho
+ * @since 2016
+ *
+ * Updated by Gabriel Cesar, 2018
+ *
  */
-public class NetworkReceiver extends BroadcastReceiver {
+public class NetworkReceiverImpl extends BroadcastReceiver {
 
-    private INetworkReceiver networkManager;
+    private NetworkReceiver networkManager;
 
-    public NetworkReceiver() {
+    public NetworkReceiverImpl() {
         networkManager = NetworkManager.getInstance();
     }
 
