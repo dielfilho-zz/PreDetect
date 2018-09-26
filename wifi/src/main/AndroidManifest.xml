@@ -21,7 +21,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="danielfilho.ufc.br.com.predetect.receivers.NetworkReceiver" android:enabled="true" android:exported="true">
+        <receiver android:name="danielfilho.ufc.br.com.predetect.receivers.NetworkReceiverImpl" android:enabled="true" android:exported="true">
             <intent-filter android:priority="1000">
                 <action android:name="android.net.wifi.RSSI_CHANGED" />
                 <category android:name="android.intent.category.DEFAULT"/>
