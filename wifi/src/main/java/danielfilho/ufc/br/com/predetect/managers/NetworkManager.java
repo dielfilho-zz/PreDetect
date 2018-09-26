@@ -16,7 +16,6 @@ import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
 import br.ufc.quixada.predetect.common.interfaces.NetworkListener;
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver;
 import br.ufc.quixada.predetect.common.managers.NetworkResult;
-import br.ufc.quixada.predetect.common.utils.NetworkUtilsKt;
 import br.ufc.quixada.predetect.common.utils.ParcelableUtilsKt;
 import danielfilho.ufc.br.com.predetect.datas.WiFiBundle;
 import danielfilho.ufc.br.com.predetect.datas.WiFiData;
@@ -24,6 +23,7 @@ import danielfilho.ufc.br.com.predetect.intefaces.WiFiListener;
 import danielfilho.ufc.br.com.predetect.intefaces.WiFiObserver;
 import danielfilho.ufc.br.com.predetect.receivers.WiFiNetworkResultReceiver;
 import danielfilho.ufc.br.com.predetect.services.NetworkObserverService;
+import danielfilho.ufc.br.com.predetect.utils.NetworkUtils;
 
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_TAG;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.RESULT_RECEIVER;
@@ -105,7 +105,7 @@ public class NetworkManager implements NetworkReceiver {
 
             if (resultList.size() > 0) {
                 for (ScanResult result : resultList) {
-                    WiFiData data = new WiFiData(result.BSSID, result.level, NetworkUtilsKt.rssiToDistance(result.level), result.SSID);
+                    WiFiData data = new WiFiData(result.BSSID, result.level, NetworkUtils.rssiToDistance(result.level), result.SSID);
                     wiFiData.add(data);
                 }
             }
@@ -129,7 +129,7 @@ public class NetworkManager implements NetworkReceiver {
 
             if (wifiManager != null) {
                 for (ScanResult result : wifiManager.getScanResults()) {
-                    WiFiData wifi = new WiFiData(result.BSSID, result.level, NetworkUtilsKt.rssiToDistance(result.level), result.SSID);
+                    WiFiData wifi = new WiFiData(result.BSSID, result.level, NetworkUtils.rssiToDistance(result.level), result.SSID);
                     wifiList.add(wifi);
                 }
             }

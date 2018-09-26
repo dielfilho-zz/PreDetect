@@ -22,12 +22,12 @@ import java.util.HashSet;
 import java.util.List;
 
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
-import br.ufc.quixada.predetect.common.utils.NetworkUtilsKt;
 import br.ufc.quixada.predetect.common.utils.ParcelableUtilsKt;
 import danielfilho.ufc.br.com.predetect.datas.WiFiBundle;
 import danielfilho.ufc.br.com.predetect.datas.WiFiData;
 import danielfilho.ufc.br.com.predetect.managers.NetworkManager;
 import danielfilho.ufc.br.com.predetect.receivers.ObservingReceiver;
+import danielfilho.ufc.br.com.predetect.utils.NetworkUtils;
 
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.ACTION_OBSERVING_ENDS;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.BUNDLE_FINISH_OBSERVING;
@@ -143,8 +143,8 @@ public class NetworkObserverService extends Service implements Runnable {
         for(ScanResult sr : scanResults){
             WiFiData temp = new WiFiData(sr.BSSID);
 
-            if(!hashWifi.contains(temp)) {
-                double resultDistance = NetworkUtilsKt.rssiToDistance(sr.level);
+            if (!hashWifi.contains(temp)) {
+                double resultDistance = NetworkUtils.rssiToDistance(sr.level);
                 WiFiData data = new WiFiData(sr.BSSID, sr.level, resultDistance, sr.SSID);
                 XLog.d(sr.BSSID+","+ sr.SSID+","+sr.level+","+resultDistance);
                 hashWifi.add(data);

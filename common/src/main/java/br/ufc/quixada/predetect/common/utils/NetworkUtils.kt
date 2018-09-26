@@ -1,25 +1,15 @@
 package br.ufc.quixada.predetect.common.utils
 
-import br.ufc.quixada.predetect.common.properties.rssiAtOneMeter
-import br.ufc.quixada.predetect.common.properties.signalLoss
-import java.lang.Double.parseDouble
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 
 /**
- * This formula is based in path loss model function
+ * Calculate the distance
  *
- * @param rssi Received Signal Strength Intensity
- * @see <link to function>
+ * @param rssi              the currently measured RSSI
+ * @param rssiAtOneMeter    the RSSI measured at 1m distance
+ * @param pathLossParameter the path-loss adjustment parameter
  *
- * */
-fun rssiToDistance(rssi: Int): Double {
-
-    val decimalFormat = DecimalFormat(".#")
-    val dfs = DecimalFormatSymbols()
-    dfs.decimalSeparator = '.'
-    decimalFormat.decimalFormatSymbols = dfs
-
-    val distance = Math.pow(10.0, (rssiAtOneMeter - rssi) / signalLoss)
-    return parseDouble(decimalFormat.format(distance))
+ * @see [log-distance path loss model](https://en.wikipedia.org/wiki/Log-distance_path_loss_model)
+ */
+fun calculateDistance(rssi: Double, rssiAtOneMeter: Double, pathLossParameter: Double): Double {
+    return Math.pow(10.0, (rssiAtOneMeter - rssi) / (10 * pathLossParameter))
 }
