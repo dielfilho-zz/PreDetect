@@ -3,7 +3,7 @@ apply plugin: 'maven'
 
 android {
     compileSdkVersion 28
-    buildToolsVersion "28.0.1"
+    buildToolsVersion "28.0.2"
 
     defaultConfig {
         minSdkVersion 14
@@ -22,7 +22,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'junit:junit:4.12'
     implementation 'com.elvishew:xlog:1.4.1'
-    implementation 'com.android.support:appcompat-v7:28.0.0-rc02'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation project(':common')
+
+    testImplementation 'junit:junit:4.12'
 }

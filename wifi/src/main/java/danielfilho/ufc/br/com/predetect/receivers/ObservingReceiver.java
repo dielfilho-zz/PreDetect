@@ -17,7 +17,10 @@ import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI_BUNDLE;
 
 /**
- * Created by Daniel Filho on 11/17/16.
+ *
+ * @author Daniel Filho
+ * @since 2016
+ *
  */
 
 public class ObservingReceiver extends WakefulBroadcastReceiver {
