@@ -57,10 +57,11 @@ public class NetworkManager implements NetworkReceiver {
         this.listeners = new ArrayList<>();
     }
 
+    @SuppressWarnings("unchecked")
     private void notifyWiFiListeners(List<WiFiData> wifiData){
         for(NetworkListener nl : listeners){
             if(nl instanceof WiFiListener){
-                ((WiFiListener) nl).onWiFiChange(wifiData);
+                nl.onChange(wifiData);
             }
         }
     }
@@ -88,10 +89,11 @@ public class NetworkManager implements NetworkReceiver {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void registerListener(NetworkListener listener){
         this.listeners.add(listener);
         if(listener instanceof WiFiListener){
-            ((WiFiListener) listener).onWiFiChange(onWiFiListenerRegistered(listener.getListenerContext()));
+            listener.onChange(onWiFiListenerRegistered(listener.getListenerContext()));
         }
     }
 

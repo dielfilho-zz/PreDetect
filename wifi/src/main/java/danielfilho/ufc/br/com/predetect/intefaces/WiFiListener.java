@@ -1,7 +1,5 @@
 package danielfilho.ufc.br.com.predetect.intefaces;
 
-import java.util.List;
-
 import br.ufc.quixada.predetect.common.interfaces.NetworkListener;
 import danielfilho.ufc.br.com.predetect.datas.WiFiData;
 
@@ -13,6 +11,4 @@ import danielfilho.ufc.br.com.predetect.datas.WiFiData;
  * Updated by Gabriel Cesar, 2018
  *
  */
-public interface WiFiListener extends NetworkListener {
-    void onWiFiChange(List<WiFiData> list);
-}
+public interface WiFiListener extends NetworkListener<WiFiData> {}
