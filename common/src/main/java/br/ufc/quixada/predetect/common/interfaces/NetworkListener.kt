@@ -1,7 +1,5 @@
 package br.ufc.quixada.predetect.common.interfaces
 
-import android.content.Context
-
 
 /**
  *
@@ -11,6 +9,6 @@ import android.content.Context
  * @updated Gabriel Cesar, 2018
  *
  */
-interface NetworkListener {
-    val listenerContext: Context
+interface NetworkListener <T> : NetworkContext {
+    fun onChange(list: List<T>)
 }
