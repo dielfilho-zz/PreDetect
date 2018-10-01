@@ -1,4 +1,4 @@
-package br.ufc.predetect.ble.managers
+package br.ufc.predetect.ble.properties
 
 object NetworkPropertiesUtils {
     val rSSiAtOneMeter : Int = -38

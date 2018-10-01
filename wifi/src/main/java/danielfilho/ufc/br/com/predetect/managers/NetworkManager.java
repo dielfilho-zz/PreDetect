@@ -54,7 +54,6 @@ public class NetworkManager implements NetworkReceiver {
 
     private NetworkManager() {
         this.listeners = new ArrayList<>();
-        this.listeners = new ArrayList<>();
     }
 
     @SuppressWarnings("unchecked")
