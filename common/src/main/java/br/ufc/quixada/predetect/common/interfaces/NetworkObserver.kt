@@ -10,6 +10,6 @@ import br.ufc.quixada.predetect.common.managers.NetworkResult
  * @updated Gabriel Cesar, 2018
  *
  */
-interface NetworkObserver<T>: NetworkListener {
+interface NetworkObserver<T>: NetworkContext {
     fun onObservingEnds(networkResult: NetworkResult<T>)
 }
