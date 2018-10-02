@@ -1,28 +1,24 @@
 package br.ufc.predetect.ble.managers
 
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import br.ufc.predetect.ble.domain.Beacon
 import br.ufc.predetect.ble.interfaces.BeaconListener
+import br.ufc.predetect.ble.utils.LOG_TAG
 import br.ufc.quixada.predetect.common.interfaces.NetworkListener
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver
-import com.polidea.rxandroidble2.RxBleClient
-import com.polidea.rxandroidble2.scan.ScanFilter
-import com.polidea.rxandroidble2.scan.ScanSettings
-import io.reactivex.android.schedulers.AndroidSchedulers
 
 
 object NetworkManager : NetworkReceiver {
 
-    lateinit var rxBleClient: RxBleClient
-    lateinit var btAdapter: BluetoothAdapter
-    lateinit var btManager : BluetoothManager
-
     private val listeners: MutableList<NetworkListener<Beacon>>? = emptyList<NetworkListener<Beacon>>().toMutableList()
 
-    fun notifyWiFiListeners(wifiData: List<Beacon>) {
+    private fun notifyWiFiListeners(wifiData: List<Beacon>) {
         listeners?.forEach {
             if (it is BeaconListener) {
                 it.onChange(wifiData)
@@ -35,7 +31,7 @@ object NetworkManager : NetworkReceiver {
         listeners?.add(listener)
 
         if (listener is BeaconListener) {
-            listener.onChange(onListenerRegistered(listener.getListenerContext()))
+            onListenerRegistered(listener.getListenerContext())
         }
     }
 
@@ -43,33 +39,41 @@ object NetworkManager : NetworkReceiver {
         listeners?.remove(listener)
     }
 
-    @Throws(NullPointerException::class)
-    private fun onListenerRegistered(context: Context): List<Beacon> {
-        btManager = context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        rxBleClient = RxBleClient.create(context)
-        btAdapter = btManager.adapter
-
-        TODO("research about blocking next in this context")
-
-//        return rxBleClient.scanBleDevices(scanSettings(), scanFilter())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .blockingNext().map {
-//                    Beacon()
-//                }
-
-//                val data = WiFiData(result.BSSID, result.level, NetworkUtils.rssiToDistance(result.level), result.SSID)
-
-    }
 
     override fun onNetworkReceive(context: Context?, intent: Intent?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
+
+    @Throws(NullPointerException::class)
+    private fun onListenerRegistered(context: Context) {
+        val btManager: BluetoothManager? = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        btManager?.adapter?.bluetoothLeScanner?.startScan(emptyList(), scanSettings(), scanCallback())
+    }
+
+    private fun scanCallback() : ScanCallback = object : ScanCallback() {
+        override fun onBatchScanResults(results: MutableList<ScanResult>?) {
+
+            notifyWiFiListeners(results?.map {
+                Beacon()
+            }.orEmpty())
+
+            TODO("Implements filters to improve rssi quality and ")
+//                val data = WiFiData(result.BSSID, result.level, NetworkUtils.rssiToDistance(result.level), result.SSID)
+
+            // notifyListeners
+        }
+
+        override fun onScanResult(callbackType: Int, result: ScanResult?) {
+            Log.i(LOG_TAG, "HAS RESULTS")
+        }
+    }
+
     private fun scanSettings() : ScanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+            .setReportDelay(TEN_MILLISECONDS)
             .build()
 
-    private fun scanFilter() : ScanFilter = ScanFilter.empty()
-
+    private const val TEN_MILLISECONDS = 10L
 }
