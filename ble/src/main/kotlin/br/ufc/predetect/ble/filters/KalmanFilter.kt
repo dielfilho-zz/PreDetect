@@ -1,22 +1,5 @@
-/*
- * Copyright 2018 neXenio
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
-
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package br.ufc.predetect.ble.filters
 
-import br.ufc.predetect.ble.domain.AdvertisingPacket
 import br.ufc.predetect.ble.utils.calculateVariance
 
 /**
@@ -35,19 +18,17 @@ import br.ufc.predetect.ble.utils.calculateVariance
  * @see <https://www.wouterbulten.nl/blog/tech/kalman-filters-explained-removing-noise-from-rssi-signals/> Kalman Explained
  * @see <https://github.com/fgroch/beacon-rssi-resolver/blob/master/src/main/java/tools/blocks/filter/KalmanFilter.java> Example Implementation
  *
- *
  */
 
-class KalmanFilter (val duration : Long, private val processNoise: Double = 0.008) : RSSIFilter {
+class KalmanFilter (private val processNoise: Double = 0.008) : RSSIFilter {
 
-    override fun filter(advertisingPackets : List<AdvertisingPacket>): Double {
-        val advertisingPacketRSSi = advertisingPackets.map { advertisingPacket -> advertisingPacket.RSSI }
-        val averageRSSi = advertisingPacketRSSi.average()
-        val measurementNoise : Double = calculateVariance(advertisingPacketRSSi, averageRSSi)
-        return calculateKalmanRSSi(advertisingPackets, processNoise, measurementNoise, averageRSSi)
+    override fun filter(advertisingPackets : List<Int>): Int {
+        val averageRSSi = advertisingPackets.average()
+        val measurementNoise : Double = calculateVariance(advertisingPackets, averageRSSi)
+        return calculateKalman(advertisingPackets, processNoise, measurementNoise, averageRSSi).toInt()
     }
 
-    private fun calculateKalmanRSSi(advertisingPackets: List<AdvertisingPacket>,
+    private fun calculateKalman(advertisingPackets: List<Int>,
                                     processNoise: Double,
                                     measurementNoise: Double,
                                     averageRSSi: Double): Double
@@ -58,7 +39,7 @@ class KalmanFilter (val duration : Long, private val processNoise: Double = 0.00
 
         advertisingPackets.forEach {
             val gain = lastErrorCovariance.div(lastErrorCovariance.plus(measurementNoise))
-            estimated += gain.times(it.RSSI.minus(estimated))
+            estimated += gain.times(it.minus(estimated))
             errorCovariance = 1.minus(gain).times(lastErrorCovariance)
             lastErrorCovariance = errorCovariance.plus(processNoise)
         }
