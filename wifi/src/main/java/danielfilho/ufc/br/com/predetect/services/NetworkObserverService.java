@@ -1,5 +1,6 @@
 package danielfilho.ufc.br.com.predetect.services;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -65,6 +66,7 @@ public class NetworkObserverService extends Service implements Runnable {
         Log.d(LOG_TAG, "-------- SERVICE ON CREATE -------");
     }
 
+    @SuppressLint("InvalidWakeLockTag")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -156,7 +158,7 @@ public class NetworkObserverService extends Service implements Runnable {
     @Override
     public void run() {
 
-        XLog.d("#################################################################################");
+        XLog.d("####################");
 
         int observedTime = 0;
 

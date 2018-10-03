@@ -1,7 +1,8 @@
 package br.ufc.predetect.ble.utils
 
-import br.ufc.predetect.ble.properties.NetworkPropertiesUtils.rssiAtOneMeter
-import br.ufc.predetect.ble.properties.NetworkPropertiesUtils.signalLoss
+import android.bluetooth.le.ScanSettings
+import br.ufc.predetect.ble.properties.BLENetworkProperties.rssiAtOneMeter
+import br.ufc.predetect.ble.properties.BLENetworkProperties.signalLoss
 import br.ufc.quixada.predetect.common.utils.calculateDistance
 import java.lang.Double.parseDouble
 import java.text.DecimalFormat
@@ -25,3 +26,11 @@ fun rssiToDistance(rssi: Int): Double {
     val distance = calculateDistance(rssi.toDouble(), rssiAtOneMeter.toDouble(), signalLoss)
     return parseDouble(decimalFormat.format(distance))
 }
+
+fun scanSettings() : ScanSettings = ScanSettings.Builder()
+        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+        .setReportDelay(TEN_MILLISECONDS)
+        .build()
+
+private const val TEN_MILLISECONDS = 10L

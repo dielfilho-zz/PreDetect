@@ -1,11 +1,11 @@
 package br.ufc.predetect.ble.interfaces
 
 import br.ufc.predetect.ble.domain.Beacon
-import br.ufc.quixada.predetect.common.interfaces.NetworkListener
+import br.ufc.quixada.predetect.common.interfaces.NetworkObserver
 
 /**
  * @author Gabriel Cesar
  * @since 2018
  *
  */
-interface BeaconListener : NetworkListener<Beacon>
+interface BeaconObserver : NetworkObserver<Beacon>

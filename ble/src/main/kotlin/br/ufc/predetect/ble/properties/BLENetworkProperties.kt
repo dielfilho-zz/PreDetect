@@ -1,6 +1,12 @@
 package br.ufc.predetect.ble.properties
 
-object NetworkPropertiesUtils {
+/**
+ * @author Gabriel Cesar
+ * @since 2018
+ *
+ */
+//TODO
+object BLENetworkProperties {
     val rssiAtOneMeter : Int = -38
     val signalLoss : Double = 10.times(3.5)
     val signalLossAtOneMeter : Int = -41
