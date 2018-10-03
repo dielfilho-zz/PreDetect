@@ -8,4 +8,24 @@
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
 
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true">
+
+        <receiver android:name="br.ufc.predetect.ble.receivers.NetworkReceiverImpl" android:enabled="true" android:exported="true">
+            <intent-filter>
+                <action android:name="br.ufc.predetect.ble.OBSERVING_ENDS"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
+
+        <service android:name="br.ufc.predetect.ble.services.BLENetworkObserverService" android:exported="true" android:enabled="true">
+            <intent-filter android:priority="100000">
+                <action android:name="br.ufc.predetect.ble.NETWORK_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </service>
+
+    </application>
 </manifest>

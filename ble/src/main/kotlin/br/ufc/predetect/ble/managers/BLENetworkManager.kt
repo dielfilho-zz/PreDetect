@@ -87,6 +87,11 @@ object BLENetworkManager : NetworkReceiver {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             Log.i(LOG_TAG, "HAS RESULTS ${result?.device?.name}")
         }
+
+        override fun onScanFailed(errorCode: Int) {
+            Log.e(LOG_TAG, "ERROR IN SCAN $errorCode")
+            super.onScanFailed(errorCode)
+        }
     }
 
 }

@@ -14,7 +14,7 @@ const val RESULT_RECEIVER = "RESULT_RECEIVER"
 const val BLE_NETWORK_SLEEP_ERROR = "Error at Thread Sleep in BLENetworkObserverService"
 
 // Action for start NetworkObserverService
-const val ACTION_START_OBSERVING_SERVICE = "br.ufc.predetect.ble.networkservice"
+const val ACTION_START_OBSERVING_SERVICE = "br.ufc.predetect.ble.NETWORK_SERVICE"
 
 // Action when BLENetworkObserverService ends to observing a network
 const val ACTION_OBSERVING_ENDS = "br.ufc.predetect.ble.OBSERVING_ENDS"

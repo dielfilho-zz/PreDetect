@@ -123,9 +123,12 @@ class BLENetworkObserverService : Service(), Runnable {
         while (observedTime < timeInSeconds) {
 
             btManager?.adapter?.bluetoothLeScanner?.run {
-                this.startScan(emptyList(), scanSettings(), scanCallback(beaconBundle?.distanceRange))
-                this.stopScan(scanCallback(beaconBundle?.distanceRange))
-                //TODO
+                val scanCallback = scanCallback(beaconBundle?.distanceRange)
+                this.startScan(emptyList(), scanSettings(), scanCallback)
+
+                sleep(100, false)
+
+                this.stopScan(scanCallback)
             }
 
         }
@@ -150,6 +153,8 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private fun scanCallback(distanceRange : Double?) : ScanCallback = object : ScanCallback() {
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
+            super.onBatchScanResults(results)
+
             if (results != null && results.size > 0) {
                 distanceRange?.run {
                     getBeaconsFromScanResult(results).forEach { beaconResult ->
@@ -184,14 +189,20 @@ class BLENetworkObserverService : Service(), Runnable {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             Log.i(LOG_TAG, "HAS RESULTS ${result?.device?.name}")
         }
+
+        override fun onScanFailed(errorCode: Int) {
+            Log.e(LOG_TAG, "ERROR IN SCAN $errorCode")
+            super.onScanFailed(errorCode)
+        }
     }
 
-    fun sleep() {
+    fun sleep(millis : Long = 60000, sendResult : Boolean = true) {
         try {
-            Thread.sleep(60000)
+            Thread.sleep(millis)
         } catch (e: InterruptedException) {
             Log.e(LOG_TAG, BLE_NETWORK_SLEEP_ERROR)
-            networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null)
+            if (sendResult)
+                networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null)
         }
     }
 
@@ -222,6 +233,7 @@ class BLENetworkObserverService : Service(), Runnable {
             }
             .toList()
 
+    // Search by other method of make this
     companion object {
         var timeInSeconds = 0
         var observedTime = 0
