@@ -22,6 +22,7 @@ import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI
  * @since 2016
  *
  */
+
 public class ObservingReceiver extends WakefulBroadcastReceiver {
 
     @Override
