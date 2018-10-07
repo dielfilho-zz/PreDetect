@@ -113,7 +113,7 @@ networkResult
         // TODO    
     }
     .onFail { list: List<WiFiData>? ->  
-         // TODO 
+        // TODO 
     }
     .onUndefinedNetwork { list: List<WiFiData>? ->  
         // TODO 
