@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
-import br.ufc.quixada.predetect.common.interfaces.NetworkListener;
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver;
 import br.ufc.quixada.predetect.common.managers.NetworkResult;
 import br.ufc.quixada.predetect.common.utils.ParcelableUtilsKt;
@@ -41,7 +40,7 @@ public class NetworkManager implements NetworkReceiver {
 
     private static NetworkManager instance;
 
-    private List<NetworkListener> listeners;
+    private List<WiFiListener> listeners;
 
     private WifiManager.WifiLock wifiLock = null;
 
@@ -57,11 +56,9 @@ public class NetworkManager implements NetworkReceiver {
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyWiFiListeners(List<WiFiData> wifiData){
-        for(NetworkListener nl : listeners){
-            if(nl instanceof WiFiListener){
-                nl.onChange(wifiData);
-            }
+    private void notifyWiFiListeners(final List<WiFiData> wifiData){
+        for(WiFiListener nl : listeners){
+            nl.onChange(wifiData);
         }
     }
 
@@ -84,16 +81,14 @@ public class NetworkManager implements NetworkReceiver {
 
         } else {
             Log.i(LOG_TAG, "-------- WiFi list is NULL --------");
-            observer.onObservingEnds(new NetworkResult<WiFiData>(NetworkResultStatus.UNDEFINED, null));
+            observer.onObservingEnds(new NetworkResult<>(NetworkResultStatus.UNDEFINED, null));
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void registerListener(NetworkListener listener){
+    public void registerListener(WiFiListener listener){
         this.listeners.add(listener);
-        if(listener instanceof WiFiListener){
-            listener.onChange(onWiFiListenerRegistered(listener.getListenerContext()));
-        }
+        listener.onChange(onWiFiListenerRegistered(listener.getListenerContext()));
     }
 
     private List<WiFiData> onWiFiListenerRegistered(Context context){
@@ -115,7 +110,7 @@ public class NetworkManager implements NetworkReceiver {
         return new ArrayList<>();
     }
 
-    public void unregisterListener(NetworkListener listener) {
+    public void unregisterListener(WiFiListener listener) {
         this.listeners.remove(listener);
     }
 

@@ -3,6 +3,8 @@ package danielfilho.ufc.br.com.predetect.datas;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Locale;
+
 /**
  *
  * @author Daniel Filho
@@ -98,12 +100,9 @@ public class WiFiData implements Parcelable{
 
     @Override
     public String toString() {
-        return "WiFiData{" +
-                "SSID='" + SSID + '\'' +
-                ", observeCount=" + observeCount +
-                ", percent=" + percent +
-                ", MAC="+ MAC+
-                '}';
+        return String.format(Locale.ENGLISH,
+                "WiFiData{SSID=%s, observeCount=%d, percent=%.2f, MAC=%s, Distance=%.2f}",
+                SSID, observeCount, percent, MAC, distance);
     }
 
     @Override
