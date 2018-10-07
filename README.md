@@ -104,7 +104,7 @@ Essa funcionalidade permite detectar a porcentagem de presença de um dispositiv
    Primeiramente e necessário implementar a interface ```WiFiObserver``` e 
    sobreescrever o metodo ```onObservingEnds(networkResult: NetworkResult<WiFiData>)```. 
    Esse metodo é chamado pela API quando o serviço de observação termina. 
-   São retornados um código de resultado e uma lista de WiFiDatas representados por um wrapper ```NetworkResult```. 
+   São retornados um código de resultado e uma lista de WiFiData representados por um wrapper ```NetworkResult```. 
    Para facilitar a utilização o wrapper possui os seguintes métodos:
 
 ```kotlin
@@ -120,5 +120,6 @@ networkResult
     }    
 ```
 
-> O segundo parâmetro representa a lista de WiFi utilizados como referência para a observação do dispositivo. Para cada objeto nessa lista é possível obter a porcentagem de presença. 
+> O parâmetro representa a lista de WiFi utilizados como referência para a observação do dispositivo. 
+Para cada objeto nessa lista é possível obter a porcentagem de presença. 
     
