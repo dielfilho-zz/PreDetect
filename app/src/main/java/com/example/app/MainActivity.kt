@@ -4,11 +4,13 @@ import android.content.Context
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import br.ufc.quixada.predetect.common.managers.NetworkResult
 import danielfilho.ufc.br.com.predetect.datas.WiFiData
 import danielfilho.ufc.br.com.predetect.intefaces.WiFiListener
+import danielfilho.ufc.br.com.predetect.intefaces.WiFiObserver
 import danielfilho.ufc.br.com.predetect.managers.NetworkManager
 
-class MainActivity : AppCompatActivity(), WiFiListener {
+class MainActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
 
     private lateinit var manager: NetworkManager
 
@@ -26,6 +28,19 @@ class MainActivity : AppCompatActivity(), WiFiListener {
 
         Log.i("APP", "REGISTERED LISTENER")
 
+    }
+
+    override fun onObservingEnds(networkResult: NetworkResult<WiFiData>) {
+        networkResult
+                .onSuccess { list: List<WiFiData>? ->
+                    // TODO
+                }
+                .onFail { list: List<WiFiData>? ->
+                    // TODO
+                }
+                .onUndefinedNetwork { list: List<WiFiData>? ->
+                    // TODO
+                }
     }
 
     override fun onChange(list: List<WiFiData>) {

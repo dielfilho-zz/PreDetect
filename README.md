@@ -86,7 +86,9 @@ class MainActivity : AppCompatActivity(), WiFiListener {
     }
 }
 ```
+
 #### OBSERVANDO A PRESENÇA DO DISPOSITIVO:
+
 Essa funcionalidade permite detectar a porcentagem de presença de um dispositivo dentro de um raio de distancia do roteador.
 
 - Dados necessarios:
@@ -97,19 +99,26 @@ Essa funcionalidade permite detectar a porcentagem de presença de um dispositiv
 - Retorno:
 	- Lista de WiFiData com todas as informações da rede, inclusive a porcentagem de tempo que o dispositivo ficou próximo.
 
-
 - Modo de Uso:  
 
-   Primeiramente e necessário implementar a interface ```WiFiObserver``` e sobreescrever o metodo ```onWiFiObservingEnds(final int resultCode, final List<WiFiData> list)```. Esse metodo é chamado pela API quando o serviço de observação termina. São retornados um código de resultado e uma lista de WiFiDatas representados por resultCode e list. O ```resultCode``` é uma constante que informa se o serviço foi executado com sucesso ou não. Seu valor pode assumir as seguintes constantes:
+   Primeiramente e necessário implementar a interface ```WiFiObserver``` e 
+   sobreescrever o metodo ```onObservingEnds(networkResult: NetworkResult<WiFiData>)```. 
+   Esse metodo é chamado pela API quando o serviço de observação termina. 
+   São retornados um código de resultado e uma lista de WiFiDatas representados por um wrapper ```NetworkResult```. 
+   Para facilitar a utilização o wrapper possui os seguintes métodos:
 
-```java
-if(resultCode == NetworkObserverService.SERVICE_SUCCESS) {
-	//TODO   
-} else if(resultCode == NetworkObserverService.SERVICE_FAIL) {
-        //TODO
-} else if(resultCode == NetworkObserverService.SERVICE_NO_WIFI) {
-        //TODO
-}
+```kotlin
+networkResult
+    .onSuccess { list: List<WiFiData>? ->  
+        // TODO    
+    }
+    .onFail { list: List<WiFiData>? ->  
+         // TODO 
+    }
+    .onUndefinedNetwork { list: List<WiFiData>? ->  
+        // TODO 
+    }    
 ```
+
 > O segundo parâmetro representa a lista de WiFi utilizados como referência para a observação do dispositivo. Para cada objeto nessa lista é possível obter a porcentagem de presença. 
     
