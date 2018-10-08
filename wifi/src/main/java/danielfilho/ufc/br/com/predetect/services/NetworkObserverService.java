@@ -3,6 +3,7 @@ package danielfilho.ufc.br.com.predetect.services;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -147,13 +148,14 @@ public class NetworkObserverService extends Service implements Runnable {
 
         while (observedTime < timeInSeconds) {
 
-            // TODO loss references in some cases
-            wiFiDataSet = NetworkUtils.mergeWifiData(wifiManager.getScanResults(), wiFiDataSet);
+            List<ScanResult> scanResults = wifiManager.getScanResults();
+
+            wiFiDataSet = NetworkUtils.mergeWifiData(scanResults, wiFiDataSet);
 
             if (!wiFiDataSet.isEmpty()){
                 for (WiFiData wifiScan : wiFiDataSet) {
 
-                    if (wiFiBundle.getDistanceRange() >= wifiScan.getDistance()) {
+                    if (NetworkUtils.isValidWifiData(wifiScan) && wifiScan.getDistance() <= wiFiBundle.getDistanceRange()) {
 
                         int newAppear = wifiScan.getObserveCount() + 1;
                         wifiScan.setObserveCount(newAppear);
@@ -242,5 +244,4 @@ public class NetworkObserverService extends Service implements Runnable {
         Log.d(LOG_TAG, "NetworkObserverService: RELEASE WIFI LOCK");
         if(wakeLock != null && wakeLock.isHeld()) wakeLock.release();
     }
-
 }

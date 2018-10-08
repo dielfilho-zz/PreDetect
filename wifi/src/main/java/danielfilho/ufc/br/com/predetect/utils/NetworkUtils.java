@@ -43,29 +43,28 @@ public abstract class NetworkUtils {
      *  If there's an AP with 2 antennas there will be 2 networks with same MAC on scanResults list.
      * */
     public static HashSet<WiFiData> mergeWifiData(List<ScanResult> scanResults, HashSet<WiFiData> wiFiDataSet){
-        HashSet<WiFiData> hashWifi = new HashSet<>();
-        for(ScanResult sr : scanResults){
-            WiFiData temp = new WiFiData(sr.BSSID);
+        HashSet<WiFiData> wifiCollection = new HashSet<>();
 
-            if (!hashWifi.contains(temp) && wiFiDataSet.contains(temp)) {
-                double resultDistance = NetworkUtils.rssiToDistance(sr.level);
-                WiFiData data = new WiFiData(sr.BSSID, sr.level, resultDistance, sr.SSID);
+        for (WiFiData oldData: wiFiDataSet) {
+            for (ScanResult sr : scanResults) {
 
+                if (oldData.equals(new WiFiData(sr.BSSID))) {
 
-                for (WiFiData oldData: wiFiDataSet) {
-                    if (oldData.equals(data)) {
-                        data.setObserveCount(oldData.getObserveCount());
-                        data.setPercent(oldData.getPercent());
-                        break;
-                    }
+                    double resultDistance = NetworkUtils.rssiToDistance(sr.level);
+                    WiFiData data = new WiFiData(sr.BSSID, sr.level, resultDistance, sr.SSID, oldData.getObserveCount(), oldData.getPercent());
+
+                    wifiCollection.add(data);
+
+                    XLog.d(String.format(Locale.ENGLISH, "%s,%s,%d,%f", sr.BSSID, sr.SSID, sr.level, resultDistance));
+
+                    break;
                 }
-
-                XLog.d(String.format(Locale.ENGLISH, "%s,%s,%d,%f", sr.BSSID, sr.SSID, sr.level, resultDistance));
-
-                hashWifi.add(data);
             }
+
+            wifiCollection.add(oldData);
         }
-        return hashWifi;
+
+        return wifiCollection;
     }
 
     public static byte[] createWiFiBundle(List<String> wifiData, int duration, double distance){
@@ -73,4 +72,10 @@ public abstract class NetworkUtils {
         return ParcelableUtilsKt.toByteArray(wiFiBundle);
     }
 
+    public static boolean isValidWifiData(WiFiData wiFiData) {
+        return wiFiData.getMAC() != null &&
+                wiFiData.getSSID() != null &&
+                wiFiData.getDistance() > 0.001;
+
+    }
 }

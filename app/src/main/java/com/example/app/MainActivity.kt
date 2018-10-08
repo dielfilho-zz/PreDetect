@@ -26,8 +26,8 @@ class MainActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
         // WIFI OBSERVER - MAC ADDRESS
         manager.observeNetwork(
                 this,
-                listOf("cc:50:0a:55:48:50"),
-                1,
+                listOf("cc:50:0a:55:48:50", "gg:cc:aa:bb:dd:ee"),
+                2,
                 10.0
         )
     }

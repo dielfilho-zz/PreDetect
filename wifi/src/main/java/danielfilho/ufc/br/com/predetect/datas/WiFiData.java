@@ -20,19 +20,20 @@ public class WiFiData implements Parcelable{
     private int observeCount;
     private double percent;
 
+    public WiFiData(String MAC, int RSSI, double distance, String SSID, int observeCount, double percent) {
+        this.SSID = SSID;
+        this.MAC = MAC;
+        this.distance = distance;
+        this.RSSI = RSSI;
+        this.observeCount = observeCount;
+        this.percent = percent;
+    }
+
     public WiFiData(String MAC, int RSSI, double distance, String SSID) {
         this.MAC = MAC;
         this.RSSI = RSSI;
         this.SSID = SSID;
         this.distance = distance;
-        this.observeCount = 0;
-        this.percent = 0;
-    }
-
-    public WiFiData(String SSID, String MAC, int RSSI) {
-        this.MAC = MAC;
-        this.RSSI = RSSI;
-        this.SSID = SSID;
         this.observeCount = 0;
         this.percent = 0;
     }
