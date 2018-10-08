@@ -4,7 +4,8 @@ import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 
 open class NetworkResult<T> (
         private val resultCode: NetworkResultStatus,
-        private val dataListener : List<T>?
+        private val dataListener : List<T>?,
+        val observedHistory: Map<String, List<T>> = emptyMap()
 ) {
 
     fun onSuccess(action : (List<T>?) -> Unit) : NetworkResult<T> {

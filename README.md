@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity(), WiFiListener {
 
 #### OBSERVANDO A PRESENÇA DO DISPOSITIVO:
 
-Essa funcionalidade permite detectar a porcentagem de presença de um dispositivo dentro de um raio de distancia do roteador.
+Essa funcionalidade permite detectar a porcentagem de presença de um dispositivo dentro de um raio de distância do roteador.
 
 - Dados necessarios:
 	- Lista de MAC do(s) roteador(es) de referência
@@ -119,7 +119,10 @@ networkResult
         // TODO 
     }    
 ```
-
+    
+    Para iniciar também é necessário a instância do Manager e chamar o método 
+    ```observeNetwork(observer : WiFiObserver, wifiMACsToObserve : List<String>, timeInMinutes : Int, maxRangeInMeters : Double, sleepTimeInMinutes : Int)```
+    
 > O parâmetro representa a lista de WiFi utilizados como referência para a observação do dispositivo. 
 Para cada objeto nessa lista é possível obter a porcentagem de presença. 
     

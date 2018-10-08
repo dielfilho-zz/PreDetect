@@ -10,6 +10,7 @@ import android.util.Log;
 import com.elvishew.xlog.XLog;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
@@ -22,6 +23,7 @@ import danielfilho.ufc.br.com.predetect.receivers.WiFiNetworkResultReceiver;
 import danielfilho.ufc.br.com.predetect.services.NetworkObserverService;
 import danielfilho.ufc.br.com.predetect.utils.NetworkUtils;
 
+import static br.ufc.quixada.predetect.common.utils.ConstantsKt.SLEEP_TIME;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_TAG;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.RESULT_RECEIVER;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI_BUNDLE;
@@ -36,9 +38,8 @@ import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI
  */
 public class NetworkManager implements NetworkReceiver {
 
-    private static NetworkManager instance;
-
     private List<WiFiListener> listeners;
+    private static NetworkManager instance;
 
     private WifiManager.WifiLock wifiLock = null;
 
@@ -60,24 +61,21 @@ public class NetworkManager implements NetworkReceiver {
         }
     }
 
-    /**
-     * Observe wifi change in network
-     *
-     * @param observer will receive the changes
-     * @param wiFiData wifi's that will be observed
-     * @param time current time
-     * @param rangeDistance max range to observe
-     * */
-    public void observeNetwork(WiFiObserver observer, List<WiFiData> wiFiData, int time, double rangeDistance){
-        if(wiFiData.size() > 0) {
-            List<String> wifiMACs = new ArrayList<>();
-            for (WiFiData wifi : wiFiData) {
-                wifiMACs.add(wifi.getMAC());
-            }
+    public void observeNetwork(WiFiObserver observer, List<String> wifiMACsToObserve, int timeInMinutes, double maxRangeInMeters){
+        this.observeNetwork(observer, wifiMACsToObserve, timeInMinutes, maxRangeInMeters, 1);
+    }
+
+    public void observeNetwork(WiFiObserver observer, List<String> wifiMACsToObserve, int timeInMinutes, double maxRangeInMeters, int sleepTimeInMinutes){
+        if(wifiMACsToObserve.size() > 0) {
+
+            Log.i(LOG_TAG, "NetworkManager: STARTING TO OBSERVE NETWORK FOR " + sleepTimeInMinutes + " MINUTES");
 
             Intent serviceIntent = new Intent(observer.getListenerContext(), NetworkObserverService.class);
 
-            serviceIntent.putExtra(WIFI_BUNDLE, NetworkUtils.createWiFiBundle(wifiMACs, time, rangeDistance));
+            final int sleepTimeOneMinute = 60 * 1000;
+            serviceIntent.putExtra(SLEEP_TIME, sleepTimeOneMinute * sleepTimeInMinutes);
+
+            serviceIntent.putExtra(WIFI_BUNDLE, NetworkUtils.createWiFiBundle(wifiMACsToObserve, timeInMinutes * sleepTimeOneMinute, maxRangeInMeters));
 
             WiFiNetworkResultReceiver resultReceiver = new WiFiNetworkResultReceiver(observer);
 
@@ -86,8 +84,9 @@ public class NetworkManager implements NetworkReceiver {
             observer.getListenerContext().startService(serviceIntent);
 
         } else {
-            Log.i(LOG_TAG, "-------- WiFi list is NULL --------");
-            observer.onObservingEnds(new NetworkResult<>(NetworkResultStatus.UNDEFINED, null));
+            Log.i(LOG_TAG, "NetworkManager: WIFI LIST IS NULL");
+
+            observer.onObservingEnds(new NetworkResult<>(NetworkResultStatus.UNDEFINED, null, Collections.emptyMap()));
         }
     }
 
@@ -98,10 +97,12 @@ public class NetworkManager implements NetworkReceiver {
     }
 
     private List<WiFiData> onWiFiListenerRegistered(Context context){
+        Log.i(LOG_TAG, "NetworkManager: UPDATE WIFI LISTENERS");
+
         WifiManager manager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         if (manager != null) {
-            List<ScanResult> resultList = manager.getScanResults() != null ? manager.getScanResults() : new ArrayList<ScanResult>();
+            List<ScanResult> resultList = manager.getScanResults() != null ? manager.getScanResults() : new ArrayList<>();
 
             List<WiFiData> wiFiData = new ArrayList<>();
 
@@ -124,6 +125,7 @@ public class NetworkManager implements NetworkReceiver {
     public void onNetworkReceive(Context context, Intent intent) {
 
         if(WifiManager.RSSI_CHANGED_ACTION.equals(intent.getAction())) {
+            Log.i(LOG_TAG, "NetworkManager: RSSi CHANGED - UPDATE WIFI LISTENERS");
 
             WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
@@ -137,14 +139,13 @@ public class NetworkManager implements NetworkReceiver {
             }
 
             notifyWiFiListeners(wifiList);
-
         }
-
     }
 
     public void holdWifiLock(Context context){
-        if(wifiLock == null){
+        if (wifiLock == null) {
             WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
             if (wifiManager != null) {
                 wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, LOG_TAG);
             }
@@ -152,22 +153,20 @@ public class NetworkManager implements NetworkReceiver {
 
         wifiLock.setReferenceCounted(false);
 
-        if(!wifiLock.isHeld())
-            wifiLock.acquire();
+        if(!wifiLock.isHeld()) wifiLock.acquire();
 
-        XLog.d(System.currentTimeMillis() + "|  -------------- ACQUIRE WIFI LOCK ------------");
-        Log.d(LOG_TAG, "-------------- ACQUIRE WIFI LOCK ------------");
+        XLog.d(System.currentTimeMillis() + " |  -------------- ACQUIRE WIFI LOCK ------------");
+        Log.d(LOG_TAG, "NetworkManager: ACQUIRE WIFI LOCK");
 
     }
 
     public void releaseWifiLock(){
         if(wifiLock == null){
-            Log.d(LOG_TAG, "-------------- WIFI LOCK WAS NOT CREATED ------------");
+            Log.d(LOG_TAG, "NetworkManager: WIFI LOCK WAS NOT CREATED");
             XLog.d(System.currentTimeMillis() + "|  -------------- WIFI LOCK WAS NOT CREATED ------------");
-        } else{
-            if(wifiLock.isHeld())
-                wifiLock.release();
-            Log.d(LOG_TAG, "-------------- RELEASE WIFI LOCK ------------");
+        } else {
+            if (wifiLock.isHeld()) wifiLock.release();
+            Log.d(LOG_TAG, "NetworkManager: RELEASE WIFI LOCK");
             XLog.d(System.currentTimeMillis() + "|  -------------- RELEASE WIFI LOCK ------------");
         }
     }

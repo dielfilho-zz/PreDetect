@@ -18,48 +18,48 @@ class MainActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        Log.i("APP", "INITIALIZING MANAGER INSTANCE")
         manager = NetworkManager.getInstance()
 
-        Log.i("APP", "REGISTER LISTENER")
-
-        // Register to receive data from wifi network
+        // REGISTER TO RECEIVE DATA FROM WIFI NETWORK
         manager.registerListener(this)
 
-        Log.i("APP", "REGISTERED LISTENER")
-
-        Log.i("APP_END", "INITIALIZING OBSERVER")
-
+        // WIFI OBSERVER - MAC ADDRESS
         manager.observeNetwork(
                 this,
-                listOf(WiFiData("d0:04:92:08:56:48")),
-                System.currentTimeMillis().toInt(),
+                listOf("cc:50:0a:55:48:50"),
+                1,
                 10.0
         )
     }
 
+    // WIFI OBSERVER - RESULT
     override fun onObservingEnds(networkResult: NetworkResult<WiFiData>) {
         networkResult
                 .onSuccess {
-                    Log.i("APP_END", "SUCCESS CONTEXT")
+                    Log.i(LOG_WIFI_OBSERVER, "SUCCESS CONTEXT")
 
-                    it?.run {
-                        Log.i("APP_END", it.size.toString())
-                        Log.i("APP_END", it.toString())
+                    // WIFI RESULT LIST
+                    it?.apply {
+                        Log.i(LOG_WIFI_OBSERVER, it.size.toString())
+                        Log.i(LOG_WIFI_OBSERVER, it.toString())
                     }
+
+                    // Show status for each MAC in each iteration
+                    Log.i(LOG_WIFI_OBSERVER, networkResult.observedHistory.toString())
                 }
                 .onFail {
-                    Log.i("APP_END", "FAIL CONTEXT")
+                    Log.i(LOG_WIFI_OBSERVER, "FAIL CONTEXT")
                 }
                 .onUndefinedNetwork {
-                    Log.i("APP_END", "UNDEFINED CONTEXT")
+                    Log.i(LOG_WIFI_OBSERVER, "UNDEFINED CONTEXT")
                 }
+
     }
 
+    // WIFI LISTENER - RESULTS FOR EACH RSS UPDATE
     override fun onChange(list: List<WiFiData>) {
-        Log.i("APP", "INITIALIZING WIFI DATA LISTENER")
-        Log.i("APP", "WIFI DATA ==> ${list.size}")
-        Log.i("APP_", list.filter { it.ssid == "brisa-266168" }.toString())
+        Log.i(LOG_WIFI_LISTENER, "INITIALIZING WIFI DATA LISTENER")
+        Log.i(LOG_WIFI_LISTENER, "WIFI DATA ==> ${list.size}")
     }
 
     override fun getListenerContext(): Context = this
@@ -77,5 +77,10 @@ class MainActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
     override fun onResume() {
         manager.registerListener(this)
         super.onResume()
+    }
+
+    companion object {
+        const val LOG_WIFI_OBSERVER = "WIFI_OBSERVER"
+        const val LOG_WIFI_LISTENER = "WIFI_LISTENER"
     }
 }

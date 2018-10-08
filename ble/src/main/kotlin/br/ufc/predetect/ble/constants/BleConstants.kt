@@ -2,7 +2,7 @@ package br.ufc.predetect.ble.constants
 
 import android.os.Environment
 
-const val LOG_TAG = "LOG__PRE_DETECT__BLE"
+const val LOG_TAG = "PRE_DETECT__BLE"
 
 const val BLE_SCANNED = "BLE_SCANNED"
 
@@ -21,4 +21,4 @@ const val ACTION_OBSERVING_ENDS = "br.ufc.predetect.ble.OBSERVING_ENDS"
 
 const val BUNDLE_FINISH_OBSERVING = "BUNDLE_FINISH_OBSERVING"
 
-val LOG_PATH : String = Environment.getExternalStorageDirectory().path
+val LOG_PATH : String = Environment.getExternalStorageDirectory().absolutePath

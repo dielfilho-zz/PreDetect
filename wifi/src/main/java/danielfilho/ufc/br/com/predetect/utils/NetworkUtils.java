@@ -8,6 +8,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 
 import br.ufc.quixada.predetect.common.utils.ParcelableUtilsKt;
 import danielfilho.ufc.br.com.predetect.datas.WiFiBundle;
@@ -38,15 +39,29 @@ public abstract class NetworkUtils {
         return parseDouble(decimalFormat.format(distance));
     }
 
-    public static HashSet<WiFiData> removeReplicatedWifi(List<ScanResult> scanResults){
+    /**
+     *  If there's an AP with 2 antennas there will be 2 networks with same MAC on scanResults list.
+     * */
+    public static HashSet<WiFiData> mergeWifiData(List<ScanResult> scanResults, HashSet<WiFiData> wiFiDataSet){
         HashSet<WiFiData> hashWifi = new HashSet<>();
         for(ScanResult sr : scanResults){
             WiFiData temp = new WiFiData(sr.BSSID);
 
-            if (!hashWifi.contains(temp)) {
+            if (!hashWifi.contains(temp) && wiFiDataSet.contains(temp)) {
                 double resultDistance = NetworkUtils.rssiToDistance(sr.level);
                 WiFiData data = new WiFiData(sr.BSSID, sr.level, resultDistance, sr.SSID);
-                XLog.d(sr.BSSID+","+ sr.SSID+","+sr.level+","+resultDistance);
+
+
+                for (WiFiData oldData: wiFiDataSet) {
+                    if (oldData.equals(data)) {
+                        data.setObserveCount(oldData.getObserveCount());
+                        data.setPercent(oldData.getPercent());
+                        break;
+                    }
+                }
+
+                XLog.d(String.format(Locale.ENGLISH, "%s,%s,%d,%f", sr.BSSID, sr.SSID, sr.level, resultDistance));
+
                 hashWifi.add(data);
             }
         }
@@ -57,4 +72,5 @@ public abstract class NetworkUtils {
         WiFiBundle wiFiBundle = new WiFiBundle(wifiData, duration, distance);
         return ParcelableUtilsKt.toByteArray(wiFiBundle);
     }
+
 }
