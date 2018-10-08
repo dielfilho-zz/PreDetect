@@ -1,7 +1,6 @@
 package danielfilho.ufc.br.com.predetect.intefaces;
 
 import br.ufc.quixada.predetect.common.interfaces.NetworkObserver;
-import br.ufc.quixada.predetect.common.managers.NetworkResult;
 import danielfilho.ufc.br.com.predetect.datas.WiFiData;
 
 /**

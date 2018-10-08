@@ -3,6 +3,8 @@ package danielfilho.ufc.br.com.predetect.datas;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Locale;
+
 /**
  *
  * @author Daniel Filho
@@ -18,19 +20,20 @@ public class WiFiData implements Parcelable{
     private int observeCount;
     private double percent;
 
+    public WiFiData(String MAC, int RSSI, double distance, String SSID, int observeCount, double percent) {
+        this.SSID = SSID;
+        this.MAC = MAC;
+        this.distance = distance;
+        this.RSSI = RSSI;
+        this.observeCount = observeCount;
+        this.percent = percent;
+    }
+
     public WiFiData(String MAC, int RSSI, double distance, String SSID) {
         this.MAC = MAC;
         this.RSSI = RSSI;
         this.SSID = SSID;
         this.distance = distance;
-        this.observeCount = 0;
-        this.percent = 0;
-    }
-
-    public WiFiData(String SSID, String MAC, int RSSI) {
-        this.MAC = MAC;
-        this.RSSI = RSSI;
-        this.SSID = SSID;
         this.observeCount = 0;
         this.percent = 0;
     }
@@ -98,12 +101,9 @@ public class WiFiData implements Parcelable{
 
     @Override
     public String toString() {
-        return "WiFiData{" +
-                "SSID='" + SSID + '\'' +
-                ", observeCount=" + observeCount +
-                ", percent=" + percent +
-                ", MAC="+ MAC+
-                '}';
+        return String.format(Locale.ENGLISH,
+                "WiFiData{SSID=%s, observeCount=%d, percent=%.2f, MAC=%s, Distance=%.2f}",
+                SSID, observeCount, percent, MAC, distance);
     }
 
     @Override

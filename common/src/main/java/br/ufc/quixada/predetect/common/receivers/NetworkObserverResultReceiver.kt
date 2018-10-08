@@ -8,18 +8,21 @@ import android.util.Log
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 import br.ufc.quixada.predetect.common.interfaces.NetworkObserver
 import br.ufc.quixada.predetect.common.managers.NetworkResult
+import br.ufc.quixada.predetect.common.utils.LOG_PRE_DETECT
+import br.ufc.quixada.predetect.common.utils.OBSERVED_HISTORY
 
 abstract class NetworkObserverResultReceiver<D : Parcelable>(
         private val keyScanner : String,
         private val observer: NetworkObserver<D>? = null,
         handler: Handler? = null) : ResultReceiver(handler) {
 
-    private fun onResult(resultStatus: NetworkResultStatus, resultData : List<D>?) {
-        observer?.onObservingEnds(NetworkResult(resultStatus, resultData))
+    private fun onResult(resultStatus: NetworkResultStatus, resultData : List<D>?, history : HashMap<String, List<D>>?) {
+        Log.i(LOG_PRE_DETECT, "NetworkObserverResultReceiver: SEND MESSAGE TO $keyScanner OBSERVER")
+        observer?.onObservingEnds(NetworkResult(resultStatus, resultData, history ?: emptyMap()))
     }
 
     private fun onFail() {
-        Log.e("PRE_DETECT", "---------- COULD NOT SEND MESSAGE TO $keyScanner OBSERVER, BECAUSE IT'S NULL ----------")
+        Log.e(LOG_PRE_DETECT, "NetworkObserverResultReceiver: COULD NOT SEND MESSAGE TO $keyScanner OBSERVER, BECAUSE IT'S NULL")
     }
 
     override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
@@ -28,6 +31,10 @@ abstract class NetworkObserverResultReceiver<D : Parcelable>(
         }
 
         val values : List<D>? = resultData?.getParcelableArrayList(keyScanner)
-        this.onResult(NetworkResultStatus.fromParcelable(resultCode), values)
+
+        @Suppress("unchecked_cast")
+        val history : HashMap<String, List<D>>? = resultData?.getSerializable(OBSERVED_HISTORY) as HashMap<String, List<D>>?
+
+        this.onResult(NetworkResultStatus.fromParcelable(resultCode), values, history)
     }
 }

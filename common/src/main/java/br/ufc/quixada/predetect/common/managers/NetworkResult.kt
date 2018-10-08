@@ -4,26 +4,27 @@ import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 
 open class NetworkResult<T> (
         private val resultCode: NetworkResultStatus,
-        val dataListener : List<T>?
+        private val dataListener : List<T>?,
+        val observedHistory: Map<String, List<T>> = emptyMap()
 ) {
 
-    fun onSuccess(action : () -> Unit) : NetworkResult<T> {
+    fun onSuccess(action : (List<T>?) -> Unit) : NetworkResult<T> {
         if (resultCode == NetworkResultStatus.SUCCESS) {
-            action()
+            action(dataListener)
         }
         return this
     }
 
-    fun onFail(action : () -> Unit) : NetworkResult<T> {
+    fun onFail(action : (List<T>?) -> Unit) : NetworkResult<T> {
         if (resultCode == NetworkResultStatus.FAIL) {
-            action()
+            action(dataListener)
         }
         return this
     }
 
-    fun onUndefinedNetwork (action : () -> Unit) : NetworkResult<T> {
+    fun onUndefinedNetwork (action : (List<T>?) -> Unit) : NetworkResult<T> {
         if (resultCode == NetworkResultStatus.UNDEFINED) {
-            action()
+            action(dataListener)
         }
         return this
     }

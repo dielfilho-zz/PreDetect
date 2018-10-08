@@ -11,13 +11,10 @@ import android.os.Environment;
 public class PreDetectConstants{
 
     //Log tag
-    public static final String LOG_TAG = "LOG_PRE_DETECT";
+    public static final String LOG_TAG = "PRE_DETECT__WIFI";
 
     //Log path
-    public static final String LOG_PATH = Environment.getExternalStorageDirectory().getPath();
-
-    //Error messages
-    public static final String SLEEP_ERROR = "Error at Thread Sleep in NetworkObserverService";
+    public static final String LOG_PATH = Environment.getExternalStorageDirectory().getAbsolutePath();
 
     //Wifi Bundle
     public static final String WIFI_BUNDLE = "WIFI_BUNDLE";
@@ -39,4 +36,5 @@ public class PreDetectConstants{
 
     public static final String BUNDLE_FINISH_OBSERVING = "BUNDLE_FINISH_OBSERVING";
 
+    public static final String WAKE_LOCK_TAG = "PRE_DETECT_WIFI:OBSERVING_WAKE_LOCK";
 }
