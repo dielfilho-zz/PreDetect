@@ -92,16 +92,18 @@ class MainActivity : AppCompatActivity(), WiFiListener {
 Essa funcionalidade permite detectar a porcentagem de presença de um dispositivo dentro de um raio de distância do roteador.
 
 - Dados necessarios:
-	- Lista de MAC do(s) roteador(es) de referência
-	- Tempo de checagem em Milisegundos
+	- Lista de MAC do(s) roteador(es) de referência.
+	- Tempo total para checagem em minutos.
 	- Distância do raio em metros. 
-
+	- (Opcional) Intervalo de checagem em minutos.
 - Retorno:
 	- Lista de WiFiData com todas as informações da rede, inclusive a porcentagem de tempo que o dispositivo ficou próximo.
 
 - Modo de Uso:  
 
-   É necessário implementar a interface ```WiFiObserver``` e 
+Para iniciar também é necessário a instância do ```NetworkManager``` e chamar o método  ```observeNetwork(observer : WiFiObserver, wifiMACsToObserve : List<String>, timeInMinutes : Int, maxRangeInMeters : Double, sleepTimeInMinutes : Int)``` passando os respectivos parâmetros.
+
+   É necessário implementar a interface ```WiFiObserver```, criar uma instância de ```NetworkManager```, chamar o método ```observeNetwork(observer : WiFiObserver, wifiMACsToObserve : List<String>, timeInMinutes : Int, maxRangeInMeters : Double, sleepTimeInMinutes : Int)``` passando os respectivos parâmetros e 
    sobreescrever o metodo ```onObservingEnds(networkResult: NetworkResult<WiFiData>)```. 
    Esse metodo é chamado pela API quando o serviço de observação termina. 
    São retornados um código de resultado e uma lista de WiFiData representados por um wrapper ```NetworkResult```. 
@@ -119,10 +121,7 @@ networkResult
         // TODO 
     }    
 ```
+
+> O parâmetro ```list: List<WiFiData>?``` representa a lista de WiFi utilizados como referência para a observação do dispositivo. Para cada objeto nessa lista é possível obter a porcentagem de presença. 
     
-    Para iniciar também é necessário a instância do Manager e chamar o método 
-    ```observeNetwork(observer : WiFiObserver, wifiMACsToObserve : List<String>, timeInMinutes : Int, maxRangeInMeters : Double, sleepTimeInMinutes : Int)```
-    
-> O parâmetro representa a lista de WiFi utilizados como referência para a observação do dispositivo. 
-Para cada objeto nessa lista é possível obter a porcentagem de presença. 
     
