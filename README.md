@@ -101,7 +101,7 @@ Essa funcionalidade permite detectar a porcentagem de presença de um dispositiv
 
 - Modo de Uso:  
 
-   Primeiramente e necessário implementar a interface ```WiFiObserver``` e 
+   É necessário implementar a interface ```WiFiObserver``` e 
    sobreescrever o metodo ```onObservingEnds(networkResult: NetworkResult<WiFiData>)```. 
    Esse metodo é chamado pela API quando o serviço de observação termina. 
    São retornados um código de resultado e uma lista de WiFiData representados por um wrapper ```NetworkResult```. 

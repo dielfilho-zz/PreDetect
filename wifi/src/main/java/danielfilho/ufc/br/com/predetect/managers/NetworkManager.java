@@ -15,8 +15,6 @@ import java.util.List;
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver;
 import br.ufc.quixada.predetect.common.managers.NetworkResult;
-import br.ufc.quixada.predetect.common.utils.ParcelableUtilsKt;
-import danielfilho.ufc.br.com.predetect.datas.WiFiBundle;
 import danielfilho.ufc.br.com.predetect.datas.WiFiData;
 import danielfilho.ufc.br.com.predetect.intefaces.WiFiListener;
 import danielfilho.ufc.br.com.predetect.intefaces.WiFiObserver;
@@ -62,16 +60,24 @@ public class NetworkManager implements NetworkReceiver {
         }
     }
 
+    /**
+     * Observe wifi change in network
+     *
+     * @param observer will receive the changes
+     * @param wiFiData wifi's that will be observed
+     * @param time current time
+     * @param rangeDistance max range to observe
+     * */
     public void observeNetwork(WiFiObserver observer, List<WiFiData> wiFiData, int time, double rangeDistance){
         if(wiFiData.size() > 0) {
             List<String> wifiMACs = new ArrayList<>();
             for (WiFiData wifi : wiFiData) {
                 wifiMACs.add(wifi.getMAC());
             }
-            WiFiBundle bundle = new WiFiBundle(wifiMACs, time, rangeDistance);
+
             Intent serviceIntent = new Intent(observer.getListenerContext(), NetworkObserverService.class);
 
-            serviceIntent.putExtra(WIFI_BUNDLE, bundle);
+            serviceIntent.putExtra(WIFI_BUNDLE, NetworkUtils.createWiFiBundle(wifiMACs, time, rangeDistance));
 
             WiFiNetworkResultReceiver resultReceiver = new WiFiNetworkResultReceiver(observer);
 
@@ -134,11 +140,6 @@ public class NetworkManager implements NetworkReceiver {
 
         }
 
-    }
-
-    public byte[] createWiFiBundle(List<String> wifiData, int duration, double distance){
-        WiFiBundle wiFiBundle = new WiFiBundle(wifiData, duration, distance);
-        return ParcelableUtilsKt.toByteArray(wiFiBundle);
     }
 
     public void holdWifiLock(Context context){

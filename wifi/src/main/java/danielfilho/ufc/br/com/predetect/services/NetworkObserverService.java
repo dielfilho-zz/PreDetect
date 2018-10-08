@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -62,19 +61,18 @@ public class NetworkObserverService extends Service implements Runnable {
     @Override
     public void onCreate() {
         super.onCreate();
-        XLog.d("-------- SERVICE ON CREATE -------");
+        try {
+            XLog.init(LogLevel.ALL, new FilePrinter.Builder(LOG_PATH + "pre_detect").build());
+        } catch (Exception e){
+            XLog.e(e.getMessage());
+        }
+
         Log.d(LOG_TAG, "-------- SERVICE ON CREATE -------");
     }
 
     @SuppressLint("InvalidWakeLockTag")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        try {
-            XLog.init(LogLevel.ALL, new FilePrinter.Builder(LOG_PATH + "pre_detect").build());
-        } catch (Exception e){
-            XLog.e(e.getMessage());
-        }
 
         final PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 
@@ -87,14 +85,6 @@ public class NetworkObserverService extends Service implements Runnable {
         this.networkManager.holdWifiLock(this);
 
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-
-        try {
-            XLog.init(LogLevel.ALL, new FilePrinter.Builder(LOG_PATH).build());
-        } catch (Exception e){ XLog.e(e.getMessage());}
-
-
-        Log.d(LOG_TAG, "--------- CREATING THE SERVICE ---------");
-        XLog.d("--------- CREATING THE SERVICE ---------");
 
         initBundle(intent);
 
@@ -110,7 +100,6 @@ public class NetworkObserverService extends Service implements Runnable {
         return null;
     }
 
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -123,6 +112,7 @@ public class NetworkObserverService extends Service implements Runnable {
 
             wiFiBundle = ParcelableUtilsKt.toParcelable(intent.getByteArrayExtra(WIFI_BUNDLE), WiFiBundle.CREATOR);
             networkResultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
+
             if(wiFiBundle != null) {
                 new Thread(this).start();
                 Log.d(LOG_TAG, "--------- SERVICE STARTED ---------");
@@ -136,23 +126,8 @@ public class NetworkObserverService extends Service implements Runnable {
                 }
             }
         }catch (Exception e){
-            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
         }
-    }
-
-    private HashSet<WiFiData> removeReplicatedWifi(List<ScanResult> scanResults){
-        HashSet<WiFiData> hashWifi = new HashSet<>();
-        for(ScanResult sr : scanResults){
-            WiFiData temp = new WiFiData(sr.BSSID);
-
-            if (!hashWifi.contains(temp)) {
-                double resultDistance = NetworkUtils.rssiToDistance(sr.level);
-                WiFiData data = new WiFiData(sr.BSSID, sr.level, resultDistance, sr.SSID);
-                XLog.d(sr.BSSID+","+ sr.SSID+","+sr.level+","+resultDistance);
-                hashWifi.add(data);
-            }
-        }
-        return hashWifi;
     }
 
     @Override
@@ -162,12 +137,12 @@ public class NetworkObserverService extends Service implements Runnable {
 
         int observedTime = 0;
 
-        int timeInSeconds = wiFiBundle.getObserveTime() / 60000;
+        int timeInSeconds = wiFiBundle.getObserveTime() / (60 * 1000);
 
-        List<WiFiData> wiFiDatas = new ArrayList<>();
+        List<WiFiData> wiFiData = new ArrayList<>();
 
         for (String MAC : wiFiBundle.getWifiData()) {
-            wiFiDatas.add(new WiFiData(MAC));
+            wiFiData.add(new WiFiData(MAC));
         }
 
         while(observedTime < timeInSeconds) {
@@ -177,18 +152,18 @@ public class NetworkObserverService extends Service implements Runnable {
 
                 Removing replicated MACs
              */
-            HashSet<WiFiData> wiFiDataCollection = removeReplicatedWifi(wifiManager.getScanResults());
+            HashSet<WiFiData> wiFiDataCollection = NetworkUtils.removeReplicatedWifi(wifiManager.getScanResults());
 
             if(wiFiDataCollection.size() > 0){
                 for (WiFiData wifiScan : wiFiDataCollection) {
-                    for (WiFiData wiFiData : wiFiDatas) {
-                        if (wiFiData.getMAC().equals(wifiScan.getMAC()) && wiFiBundle.getDistanceRange() >= wifiScan.getDistance()) {
+                    for (WiFiData data : wiFiData) {
+                        if (data.getMAC().equals(wifiScan.getMAC()) && wiFiBundle.getDistanceRange() >= wifiScan.getDistance()) {
 
-                            double percent = (wiFiData.getObserveCount() * 100) / timeInSeconds;
-                            wiFiData.setPercent(percent);
+                            double percent = (data.getObserveCount() * 100) / timeInSeconds;
+                            data.setPercent(percent);
 
-                            int newAppear = wiFiData.getObserveCount();
-                            wiFiData.setObserveCount(++newAppear);
+                            int newAppear = data.getObserveCount();
+                            data.setObserveCount(++newAppear);
                             Log.d(LOG_TAG, "PERCENT: " + percent);
                         }
                     }
@@ -205,10 +180,10 @@ public class NetworkObserverService extends Service implements Runnable {
 
                 observedTime++;
 
-            }else{
+            } else{
                 if(networkResultReceiver != null)
                     networkResultReceiver.send(NetworkResultStatus.UNDEFINED.getValue(), null);
-                //If there's no WIFI on ScanResults, stopping service.
+                // If there's no WIFI on ScanResults, stopping service.
                 stopSelf();
             }
 
@@ -222,7 +197,7 @@ public class NetworkObserverService extends Service implements Runnable {
             telling that network observing end
          */
         Bundle bundle = new Bundle();
-        bundle.putParcelableArrayList(WIFI_SCANNED, (ArrayList<? extends Parcelable>) wiFiDatas);
+        bundle.putParcelableArrayList(WIFI_SCANNED, (ArrayList<? extends Parcelable>) wiFiData);
 
         if(networkResultReceiver != null)
             networkResultReceiver.send(NetworkResultStatus.SUCCESS.getValue(), bundle);
@@ -237,5 +212,4 @@ public class NetworkObserverService extends Service implements Runnable {
 
         stopSelf();
     }
-
 }

@@ -28,25 +28,38 @@ class MainActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
 
         Log.i("APP", "REGISTERED LISTENER")
 
+        Log.i("APP_END", "INITIALIZING OBSERVER")
+
+        manager.observeNetwork(
+                this,
+                listOf(WiFiData("d0:04:92:08:56:48")),
+                System.currentTimeMillis().toInt(),
+                10.0
+        )
     }
 
     override fun onObservingEnds(networkResult: NetworkResult<WiFiData>) {
         networkResult
-                .onSuccess { list: List<WiFiData>? ->
-                    // TODO
+                .onSuccess {
+                    Log.i("APP_END", "SUCCESS CONTEXT")
+
+                    it?.run {
+                        Log.i("APP_END", it.size.toString())
+                        Log.i("APP_END", it.toString())
+                    }
                 }
-                .onFail { list: List<WiFiData>? ->
-                    // TODO
+                .onFail {
+                    Log.i("APP_END", "FAIL CONTEXT")
                 }
-                .onUndefinedNetwork { list: List<WiFiData>? ->
-                    // TODO
+                .onUndefinedNetwork {
+                    Log.i("APP_END", "UNDEFINED CONTEXT")
                 }
     }
 
     override fun onChange(list: List<WiFiData>) {
         Log.i("APP", "INITIALIZING WIFI DATA LISTENER")
         Log.i("APP", "WIFI DATA ==> ${list.size}")
-        Log.i("APP", "WIFI DATA ==> $list")
+        Log.i("APP_", list.filter { it.ssid == "brisa-266168" }.toString())
     }
 
     override fun getListenerContext(): Context = this
