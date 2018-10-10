@@ -3,8 +3,8 @@ _Uma API simples para desenvolvimento de aplicaçoes indoor._
 
 [![Release](https://jitpack.io/v/dielfilho/predetect.svg)](https://jitpack.io/#dielfilho/PreDetect)
 
-Listar as informações (MAC, SSID, RSSI, Distância aproximada) de todas as redes Wi-Fi próximas ao dispositivo.
-Possibilidade de se obter a porcentagem de tempo que um dispositivo ficou próximo a determinada rede Wi-Fi.
+Listar as informações (MAC, SSID, RSSI, Distância aproximada) de todas as redes, sejam elas Wi-Fi ou Bluetooth, próximas ao dispositivo.
+Possibilidade de se obter a porcentagem de tempo que um dispositivo ficou próximo a determinada rede.
 
 #### ADICIONANDO A DEPENDÊNCIA:  
 Para disponibilização da biblioteca será utilizada a plataforma Jitpack, que compartilha a versão mais atualizada do repositório.
@@ -24,7 +24,7 @@ allprojects {
 
 ```gradle
 dependencies {
-	compile 'com.github.danielfilho:predetect:VERSION'
+	compile 'REPOSITORY:predetect:VERSION'
 }
 ```
 
@@ -32,24 +32,23 @@ dependencies {
 
 ```gradle
 dependencies {
-	compile 'com.github.danielfilho:predetect:MODULE:VERSION'
+	compile 'REPOSITORY:predetect:MODULE:VERSION'
 }
 ```
 
 #### USO BÁSICO:
 
-0. Passo: Adicione a permissão para acessar Fine Location ou Coarse Location no Manifest.xml
-1. Passo: Implementar a interface WiFiListener
-2. Passo: Implementar os metodos "onWifiChange" e "getListenerContext"
+1. Passo: Implementar a interface Listener
+2. Passo: Implementar os metodos "onChange" e "getListenerContext"
 3. Passo: Obter a intância da classe NetworkManager
-3. Passo: Registrar a sua Activity para receber os dados das redes Wi-Fi
+3. Passo: Registrar a sua Activity para receber os dados das redes
 4. Passo: Nos metodos "OnPause", "OnDestroy", utilizar o metodo "unregisterListener" para remover sua activity da lista de listeners.
 5. Passo: No metodo "OnResume", registre sua activity novamente.
 
 Todos os passos estão representados logo abaixo na classe de exemplo:
 	
 ```kotlin
-class MainActivity : AppCompatActivity(), WiFiListener {
+class MainActivity : AppCompatActivity(), Listener {
 
     private lateinit var manager: NetworkManager
 
@@ -89,39 +88,37 @@ class MainActivity : AppCompatActivity(), WiFiListener {
 
 #### OBSERVANDO A PRESENÇA DO DISPOSITIVO:
 
-Essa funcionalidade permite detectar a porcentagem de presença de um dispositivo dentro de um raio de distância do roteador.
+Essa funcionalidade permite detectar a porcentagem de presença de um dispositivo dentro de um raio de distância do ponto.
 
 - Dados necessarios:
-	- Lista de MAC do(s) roteador(es) de referência.
+	- Lista de MAC do(s) ponto(s) de referência.
 	- Tempo total para checagem em minutos.
 	- Distância do raio em metros. 
 	- (Opcional) Intervalo de checagem em minutos.
 - Retorno:
-	- Lista de WiFiData com todas as informações da rede, inclusive a porcentagem de tempo que o dispositivo ficou próximo.
+	- Lista de Data com todas as informações da rede, inclusive a porcentagem de tempo que o dispositivo ficou próximo.
 
 - Modo de Uso:  
 
-Para iniciar também é necessário a instância do ```NetworkManager``` e chamar o método  ```observeNetwork(observer : WiFiObserver, wifiMACsToObserve : List<String>, timeInMinutes : Int, maxRangeInMeters : Double, sleepTimeInMinutes : Int)``` passando os respectivos parâmetros.
-
-   É necessário implementar a interface ```WiFiObserver```, criar uma instância de ```NetworkManager```, chamar o método ```observeNetwork(observer : WiFiObserver, wifiMACsToObserve : List<String>, timeInMinutes : Int, maxRangeInMeters : Double, sleepTimeInMinutes : Int)``` passando os respectivos parâmetros e 
-   sobreescrever o metodo ```onObservingEnds(networkResult: NetworkResult<WiFiData>)```. 
+   É necessário implementar a interface ```Observer```, criar uma instância de ```NetworkManager```, chamar o método ```observeNetwork(observer : Observer, listMACsToObserve : List<String>, timeInMinutes : Int, maxRangeInMeters : Double, intervalTimeInMinutes : Int)``` passando os respectivos parâmetros e 
+   sobreescrever o metodo ```onObservingEnds(networkResult: NetworkResult<Data>)```. 
    Esse metodo é chamado pela API quando o serviço de observação termina. 
-   São retornados um código de resultado e uma lista de WiFiData representados por um wrapper ```NetworkResult```. 
+   São retornados um código de resultado e uma lista de Data representados por um wrapper ```NetworkResult```. 
    Para facilitar a utilização o wrapper possui os seguintes métodos:
 
 ```kotlin
 networkResult
-    .onSuccess { list: List<WiFiData>? ->  
+    .onSuccess { list: List<Data>? ->  
         // TODO    
     }
-    .onFail { list: List<WiFiData>? ->  
+    .onFail { list: List<Data>? ->  
         // TODO 
     }
-    .onUndefinedNetwork { list: List<WiFiData>? ->  
+    .onUndefinedNetwork { list: List<Data>? ->  
         // TODO 
     }    
 ```
 
-> O parâmetro ```list: List<WiFiData>?``` representa a lista de WiFi utilizados como referência para a observação do dispositivo. Para cada objeto nessa lista é possível obter a porcentagem de presença. 
+> O parâmetro ```list: List<Data>?``` representa a lista com os resultados da observação do dispositivo. Para cada objeto nessa lista é possível obter a porcentagem de presença. 
     
     
