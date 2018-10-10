@@ -6,6 +6,6 @@ package br.ufc.predetect.ble.properties
  *
  */
 object BLENetworkProperties {
-    const val pathLoss : Double = 35.0
-    const val signalLossAtOneMeter : Double = -41.0
+    const val pathLoss : Double = 3.5
+    const val signalLossAtOneMeter : Double = -62.0
 }

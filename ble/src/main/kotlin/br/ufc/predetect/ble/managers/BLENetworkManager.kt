@@ -22,7 +22,7 @@ import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver
  * @since 2018
  */
 object BLENetworkManager : NetworkReceiver {
-
+    private val scanCallback = scanCallback()
     private lateinit var btManager: BluetoothManager
     private val listeners: MutableList<BeaconListener>? = mutableListOf()
 
@@ -35,27 +35,31 @@ object BLENetworkManager : NetworkReceiver {
 
     fun unregisterListener(listener: BeaconListener) = listeners?.remove(listener)
 
-    /**
-     * #scanCallback already do it
-     * */
-    override fun onNetworkReceive(context: Context?, intent: Intent?) = Unit
+    override fun onNetworkReceive(context: Context?, intent: Intent?) {
+        intent?.run {
+            if (this.action == BluetoothAdapter.ACTION_STATE_CHANGED && listeners?.isNotEmpty() == true) {
+                Log.d(LOG_TAG, "BLENetworkManager: STARTING SCAN AGAIN")
+                btManager.adapter?.bluetoothLeScanner?.startScan(emptyList(), scanSettings(), scanCallback)
+            }
+        }
+    }
 
     @Throws(NullPointerException::class)
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_ADMIN)
     private fun onListenerRegistered(context: Context) {
         btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        btManager.adapter?.bluetoothLeScanner?.startScan(emptyList(), scanSettings(), scanCallback())
+        btManager.adapter?.bluetoothLeScanner?.startScan(emptyList(), scanSettings(), scanCallback)
     }
 
     private fun scanCallback() : ScanCallback = object : ScanCallback() {
 
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
-            Log.i(LOG_TAG, "BLENetworkManager: HAS BATCH")
+            Log.i(LOG_TAG, "BLENetworkManager: HAS BATCH ${results?.size}")
             super.onBatchScanResults(results)
         }
 
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            Log.i(LOG_TAG, "BLENetworkManager: HAS RESULT")
+            Log.i(LOG_TAG, "BLENetworkManager: HAS RESULT ")
 
             result?.run {
 
@@ -83,13 +87,11 @@ object BLENetworkManager : NetworkReceiver {
             super.onScanResult(callbackType, result)
         }
 
-        // Error necessary start plane mode and disable and start search again
-
-        // No solution for now
+        // Error necessary disable and enable bt again
         override fun onScanFailed(errorCode: Int) {
             Log.e(LOG_TAG, "BLENetworkManager: ERROR IN SCAN $errorCode")
             if (errorCode == 2 && BluetoothAdapter.getDefaultAdapter().disable()) {
-                Thread.sleep(1000)
+                Thread.sleep(12_000)
                 BluetoothAdapter.getDefaultAdapter().enable()
             }
             super.onScanFailed(errorCode)
@@ -106,11 +108,11 @@ object BLENetworkManager : NetworkReceiver {
             updateListeners = true
 
         if (updateListeners) {
-            notifyWiFiListeners(beaconsBatch.values.map {
-                filterBeacon(it)
-            }.toList())
+            notifyWiFiListeners(beaconsBatch.values.map { filterBeacon(it) }.toList())
 
             beaconsBatch.clear()
+
+            Thread.sleep(12_000)
         }
     }
 
@@ -119,8 +121,8 @@ object BLENetworkManager : NetworkReceiver {
         val rssFiltered = KalmanFilter().filter(advertisingPackets.map { it.rssi }).toInt()
         val distanceFiltered = rssiToDistance(rssFiltered)
 
-        Log.i(LOG_TAG, "BLENetworkManager: DISTANCE FILTERED: $distanceFiltered")
-        Log.i(LOG_TAG, "BLENetworkManager: RSS FILTERED: $rssFiltered")
+        Log.d(LOG_TAG, "BLENetworkManager: DISTANCE FILTERED: $distanceFiltered")
+        Log.d(LOG_TAG, "BLENetworkManager: RSS FILTERED: $rssFiltered")
 
         return Beacon(
                 macAddress = first.macAddress,
