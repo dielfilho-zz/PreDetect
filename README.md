@@ -1,7 +1,7 @@
 # PreDetect  
 _Uma API simples para desenvolvimento de aplicaçoes indoor._  
 
-[![Release](https://jitpack.io/v/dielfilho/predetect.svg)](https://jitpack.io/#dielfilho/PreDetect)
+[![RELEASE](https://jitpack.io/v/gabrielczar/predetect.svg)](https://jitpack.io/#gabrielczar/predetect)
 
 Listar as informações (MAC, SSID, RSSI, Distância aproximada) de todas as redes, sejam elas Wi-Fi ou Bluetooth, próximas ao dispositivo.
 Possibilidade de se obter a porcentagem de tempo que um dispositivo ficou próximo a determinada rede.
