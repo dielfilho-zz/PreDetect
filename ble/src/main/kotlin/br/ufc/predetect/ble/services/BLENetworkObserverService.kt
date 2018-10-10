@@ -15,6 +15,7 @@ import android.util.Log
 import br.ufc.predetect.ble.constants.*
 import br.ufc.predetect.ble.domain.Beacon
 import br.ufc.predetect.ble.domain.BeaconBundle
+import br.ufc.predetect.ble.filters.KalmanFilter
 import br.ufc.predetect.ble.managers.BLENetworkManager
 import br.ufc.predetect.ble.utils.isValidBeacon
 import br.ufc.predetect.ble.utils.mergeBLEData
@@ -141,7 +142,9 @@ class BLENetworkObserverService : Service(), Runnable {
 
             if (bleData.isNotEmpty()) {
                 beaconBundle?.distanceRange?.let { distanceRange ->
-                    bleData = mergeBLEData(scanResults, bleData)
+                    val srs = reduceScanResults(scanResults)
+
+                    bleData = mergeBLEData(srs, bleData)
 
                     bleData.forEach {
                         if (isValidBeacon(it) && it.distance <= distanceRange) {
@@ -185,8 +188,6 @@ class BLENetworkObserverService : Service(), Runnable {
         Log.d(LOG_TAG, "--------- SERVICE ENDS ---------")
 
         // Sending the result for the result receiver telling that network observing end
-
-        Log.i(LOG_TAG, "DATASET: $bleData")
 
         val bundle = Bundle()
         bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
@@ -241,6 +242,25 @@ class BLENetworkObserverService : Service(), Runnable {
         }
     }
 
+    private fun reduceScanResults(scanResults: List<Beacon>) : List<Beacon> =
+            scanResults
+                    .groupBy { it.macAddress }
+                    .map { it ->
+                        val first = it.value.first()
+                        val rssFiltered = KalmanFilter().filter(it.value.map { it.rssi }).toInt()
+                        val distanceFiltered = rssiToDistance(rssFiltered)
+
+                        Log.d(LOG_TAG, "BLENetworkObserverService: DISTANCE FILTERED: $distanceFiltered")
+                        Log.d(LOG_TAG, "BLENetworkObserverService: RSS FILTERED: $rssFiltered")
+
+                        Beacon(
+                                macAddress = it.key,
+                                name = first.name,
+                                rssi = rssFiltered,
+                                distance = distanceFiltered
+                        )
+                    }
+
     private fun sleep(millis : Long = 60_000, sendResultError : Boolean = true) {
         try {
             Thread.sleep(millis)
@@ -270,7 +290,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
     }
 
-    fun releaseBLeLock() {
+    private fun releaseBLeLock() {
         Log.d(LOG_TAG, "NetworkObserverService: RELEASE BLE LOCK")
 
         wakeLock?.run {

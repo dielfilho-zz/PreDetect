@@ -56,7 +56,7 @@ fun mergeBLEData(scanResults: List<Beacon>, wiFiDataSet: HashSet<Beacon>): HashS
             }
         }
 
-        btCollection.add(oldData)
+        btCollection.add(oldData.copy(name = if (oldData.name.isNullOrBlank()) "UNKNOWN" else oldData.name))
     }
 
     return btCollection

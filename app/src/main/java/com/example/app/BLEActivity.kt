@@ -5,14 +5,13 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import br.ufc.predetect.ble.domain.Beacon
+import br.ufc.predetect.ble.interfaces.BeaconListener
 import br.ufc.predetect.ble.interfaces.BeaconObserver
 import br.ufc.predetect.ble.managers.BLENetworkManager
 import br.ufc.quixada.predetect.common.managers.NetworkResult
 
-class BLEActivity : AppCompatActivity()
-        , BeaconObserver
-//        , BeaconListener
-{
+class BLEActivity : AppCompatActivity(), BeaconObserver, BeaconListener {
+
     private lateinit var manager: BLENetworkManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +21,7 @@ class BLEActivity : AppCompatActivity()
         manager = BLENetworkManager
 
         // REGISTER TO RECEIVE DATA FROM BLE NETWORK
-//        manager.registerListener(this)
+        manager.registerListener(this)
 
         manager.observeNetwork(
                 this,
@@ -55,28 +54,28 @@ class BLEActivity : AppCompatActivity()
     }
 
     // BLE LISTENER - RESULTS FOR EACH RSS UPDATE
-//    override fun onChange(list: List<Beacon>) {
-//        Log.i(LOG_BLE_LISTENER, "INITIALIZING BLE DATA LISTENER")
-//        Log.i(LOG_BLE_LISTENER, "BLE SIZE ==> ${list.size}")
-//        Log.i(LOG_BLE_LISTENER, "BLE DATA ==> $list")
-//    }
+    override fun onChange(list: List<Beacon>) {
+        Log.i(LOG_BLE_LISTENER, "INITIALIZING BLE DATA LISTENER")
+        Log.i(LOG_BLE_LISTENER, "BLE SIZE ==> ${list.size}")
+        Log.i(LOG_BLE_LISTENER, "BLE DATA ==> $list")
+    }
 
     override fun getListenerContext(): Context = this
 
-//    override fun onPause() {
-//        manager.unregisterListener(this)
-//        super.onPause()
-//    }
-//
-//    override fun onDestroy() {
-//        manager.unregisterListener(this)
-//        super.onDestroy()
-//    }
-//
-//    override fun onResume() {
-//        manager.registerListener(this)
-//        super.onResume()
-//    }
+    override fun onPause() {
+        manager.unregisterListener(this)
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        manager.unregisterListener(this)
+        super.onDestroy()
+    }
+
+    override fun onResume() {
+        manager.registerListener(this)
+        super.onResume()
+    }
 
     companion object {
         const val LOG_BLE_OBSERVER = "BLE_OBSERVER"
