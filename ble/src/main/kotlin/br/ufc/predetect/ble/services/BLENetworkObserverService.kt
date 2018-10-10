@@ -237,7 +237,7 @@ class BLENetworkObserverService : Service(), Runnable {
     companion object {
         var timeInSeconds = 0
         var observedTime = 0
-        var bleData = emptyList<Beacon>().toMutableList()
+        var bleData = mutableListOf<Beacon>()
     }
 }
 

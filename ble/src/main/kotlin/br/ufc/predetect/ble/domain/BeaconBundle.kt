@@ -4,7 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class BeaconBundle(
-        val beaconData : MutableList<String> = emptyList<String>() as MutableList<String>,
+        val beaconData : MutableList<String> = mutableListOf(),
         val observeTime: Int = 0,
         val distanceRange: Double = 0.0
 ) : Parcelable {
