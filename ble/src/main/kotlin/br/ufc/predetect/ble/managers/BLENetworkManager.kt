@@ -8,14 +8,23 @@ import android.content.Context
 import android.content.Intent
 import android.support.annotation.RequiresPermission
 import android.util.Log
+import br.ufc.predetect.ble.constants.BLE_BUNDLE
 import br.ufc.predetect.ble.constants.LOG_TAG
+import br.ufc.predetect.ble.constants.RESULT_RECEIVER
 import br.ufc.predetect.ble.domain.Beacon
 import br.ufc.predetect.ble.filters.KalmanFilter
 import br.ufc.predetect.ble.interfaces.BeaconListener
+import br.ufc.predetect.ble.interfaces.BeaconObserver
 import br.ufc.predetect.ble.managers.BeaconRepository.beaconsBatch
+import br.ufc.predetect.ble.receivers.BLENetworkResultReceiver
+import br.ufc.predetect.ble.services.BLENetworkObserverService
+import br.ufc.predetect.ble.utils.createBeaconBundle
 import br.ufc.predetect.ble.utils.rssiToDistance
 import br.ufc.predetect.ble.utils.scanSettings
+import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver
+import br.ufc.quixada.predetect.common.managers.NetworkResult
+import br.ufc.quixada.predetect.common.utils.SLEEP_TIME
 
 /**
  * @author Gabriel Cesar
@@ -49,6 +58,30 @@ object BLENetworkManager : NetworkReceiver {
     private fun onListenerRegistered(context: Context) {
         btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         btManager.adapter?.bluetoothLeScanner?.startScan(emptyList(), scanSettings(), scanCallback)
+    }
+
+    fun observeNetwork(observer: BeaconObserver, btMACsToObserve: List<String>, timeInMinutes: Int, maxRangeInMeters: Double, intervalTimeInMinutes: Int = 1) {
+        if (btMACsToObserve.isNotEmpty()) {
+
+            Log.i(LOG_TAG, "BLENetworkManager: STARTING TO OBSERVE NETWORK FOR $intervalTimeInMinutes MINUTES")
+
+            val serviceIntent = Intent(observer.getListenerContext(), BLENetworkObserverService::class.java)
+
+            val sleepTimeOneMinute : Long = 60 * 1000
+            serviceIntent.putExtra(SLEEP_TIME, sleepTimeOneMinute * intervalTimeInMinutes)
+
+            serviceIntent.putExtra(BLE_BUNDLE, createBeaconBundle(btMACsToObserve, timeInMinutes * sleepTimeOneMinute, maxRangeInMeters))
+
+            val resultReceiver = BLENetworkResultReceiver(observer)
+
+            serviceIntent.putExtra(RESULT_RECEIVER, resultReceiver)
+
+            observer.getListenerContext().startService(serviceIntent)
+
+        } else {
+            Log.i(LOG_TAG, "BLENetworkManager: WIFI LIST IS NULL")
+            observer.onObservingEnds(NetworkResult(NetworkResultStatus.UNDEFINED, null, emptyMap()))
+        }
     }
 
     private fun scanCallback() : ScanCallback = object : ScanCallback() {

@@ -41,6 +41,7 @@ public abstract class NetworkUtils {
 
     /**
      *  If there's an AP with 2 antennas there will be 2 networks with same MAC on scanResults list.
+     *  Remove duplicated and merge with previous results
      * */
     public static HashSet<WiFiData> mergeWifiData(List<ScanResult> scanResults, HashSet<WiFiData> wiFiDataSet){
         HashSet<WiFiData> wifiCollection = new HashSet<>();

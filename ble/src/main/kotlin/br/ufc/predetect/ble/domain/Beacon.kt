@@ -15,7 +15,7 @@ data class Beacon(
 
     constructor(parcel: Parcel) : this(
             parcel.readString(),
-            parcel.readString(),
+            parcel.readString() ?: "",
             parcel.readInt(),
             parcel.readDouble(),
             parcel.readInt(),
@@ -37,4 +37,19 @@ data class Beacon(
         override fun createFromParcel(parcel: Parcel): Beacon = Beacon(parcel)
         override fun newArray(size: Int): Array<Beacon?> = arrayOfNulls(size)
     }
+
+    override fun hashCode(): Int {
+        return macAddress.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other === this)
+            return true
+        else if (other !is Beacon)
+            return false
+
+        val data: Beacon = other
+        return data.macAddress.equals(macAddress, ignoreCase = true)
+    }
+
 }

@@ -21,4 +21,6 @@ const val ACTION_OBSERVING_ENDS = "br.ufc.predetect.ble.OBSERVING_ENDS"
 
 const val BUNDLE_FINISH_OBSERVING = "BUNDLE_FINISH_OBSERVING"
 
+const val WAKE_LOCK_TAG = "PRE_DETECT__BLE:OBSERVING_WAKE_LOCK"
+
 val LOG_PATH : String = Environment.getExternalStorageDirectory().absolutePath

@@ -146,7 +146,7 @@ public class WiFiData implements Parcelable{
             return false;
 
         WiFiData data = (WiFiData) o;
-        return (data.getMAC().equals(this.getMAC()));
+        return (data.getMAC().equalsIgnoreCase(this.getMAC()));
 
     }
 
