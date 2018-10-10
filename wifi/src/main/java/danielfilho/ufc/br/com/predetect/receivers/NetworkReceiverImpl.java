@@ -6,7 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver;
-import danielfilho.ufc.br.com.predetect.managers.NetworkManager;
+import danielfilho.ufc.br.com.predetect.managers.WifiNetworkManager;
 
 /**
  *
@@ -21,7 +21,7 @@ public class NetworkReceiverImpl extends BroadcastReceiver {
     private NetworkReceiver networkManager;
 
     public NetworkReceiverImpl() {
-        networkManager = NetworkManager.getInstance();
+        networkManager = WifiNetworkManager.getInstance();
     }
 
     @Override

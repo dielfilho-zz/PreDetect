@@ -26,7 +26,7 @@ import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
 import br.ufc.quixada.predetect.common.utils.ParcelableUtilsKt;
 import danielfilho.ufc.br.com.predetect.datas.WiFiBundle;
 import danielfilho.ufc.br.com.predetect.datas.WiFiData;
-import danielfilho.ufc.br.com.predetect.managers.NetworkManager;
+import danielfilho.ufc.br.com.predetect.managers.WifiNetworkManager;
 import danielfilho.ufc.br.com.predetect.receivers.ObservingReceiver;
 import danielfilho.ufc.br.com.predetect.utils.NetworkUtils;
 
@@ -55,7 +55,7 @@ public class NetworkObserverService extends Service implements Runnable {
     private Intent wakefulIntent;
     private WiFiBundle wiFiBundle;
     private WifiManager wifiManager;
-    private NetworkManager networkManager;
+    private WifiNetworkManager wifiNetworkManager;
     private ResultReceiver networkResultReceiver;
 
     private PowerManager.WakeLock wakeLock;
@@ -76,8 +76,8 @@ public class NetworkObserverService extends Service implements Runnable {
     public int onStartCommand(Intent intent, int flags, int startId) {
         this.holdWifiLock();
 
-        this.networkManager = NetworkManager.getInstance();
-        this.networkManager.holdWifiLock(this);
+        this.wifiNetworkManager = WifiNetworkManager.getInstance();
+        this.wifiNetworkManager.holdWifiLock(this);
 
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
@@ -98,7 +98,7 @@ public class NetworkObserverService extends Service implements Runnable {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        this.networkManager.releaseWifiLock();
+        this.wifiNetworkManager.releaseWifiLock();
         this.releaseWifiLock();
     }
 

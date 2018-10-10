@@ -8,17 +8,17 @@ import br.ufc.quixada.predetect.common.managers.NetworkResult
 import danielfilho.ufc.br.com.predetect.datas.WiFiData
 import danielfilho.ufc.br.com.predetect.intefaces.WiFiListener
 import danielfilho.ufc.br.com.predetect.intefaces.WiFiObserver
-import danielfilho.ufc.br.com.predetect.managers.NetworkManager
+import danielfilho.ufc.br.com.predetect.managers.WifiNetworkManager
 
-class MainActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
+class WifiActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
 
-    private lateinit var manager: NetworkManager
+    private lateinit var manager: WifiNetworkManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        manager = NetworkManager.getInstance()
+        manager = WifiNetworkManager.getInstance()
 
         // REGISTER TO RECEIVE DATA FROM WIFI NETWORK
         manager.registerListener(this)

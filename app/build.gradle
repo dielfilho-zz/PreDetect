@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.app"
-        minSdkVersion 18
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -35,4 +35,5 @@ dependencies {
 
     implementation project(':common')
     implementation project(':wifi')
+    implementation project(':ble')
 }

@@ -4,20 +4,20 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class BeaconBundle(
-        val beaconData : MutableList<String> = emptyList<String>() as MutableList<String>,
-        val observeTime: Int = 0,
+        val beaconData : List<String> = emptyList(),
+        val observeTime: Long = 0,
         val distanceRange: Double = 0.0
 ) : Parcelable {
 
     constructor(parcel: Parcel) : this(
-            parcel.readArrayList(String::class.java.classLoader) as MutableList<String>,
-            parcel.readInt(),
+            parcel.readArrayList(String::class.java.classLoader) as List<String>,
+            parcel.readLong(),
             parcel.readDouble()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeList(beaconData)
-        parcel.writeInt(observeTime)
+        parcel.writeLong(observeTime)
         parcel.writeDouble(distanceRange)
     }
 
