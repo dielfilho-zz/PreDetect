@@ -13,21 +13,15 @@ import android.os.PowerManager
 import android.os.ResultReceiver
 import android.util.Log
 import br.ufc.predetect.ble.constants.*
-import br.ufc.predetect.ble.domain.Beacon
-import br.ufc.predetect.ble.domain.BeaconBundle
+import br.ufc.predetect.ble.data.Beacon
+import br.ufc.predetect.ble.data.BeaconBundle
 import br.ufc.predetect.ble.filters.KalmanFilter
 import br.ufc.predetect.ble.managers.BLENetworkManager
-import br.ufc.predetect.ble.utils.isValidBeacon
-import br.ufc.predetect.ble.utils.mergeBLEData
-import br.ufc.predetect.ble.utils.rssiToDistance
-import br.ufc.predetect.ble.utils.scanSettings
+import br.ufc.predetect.ble.utils.*
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 import br.ufc.quixada.predetect.common.utils.SLEEP_TIME
 import br.ufc.quixada.predetect.common.utils.toParcelable
-import com.elvishew.xlog.LogLevel
 import com.elvishew.xlog.XLog
-import com.elvishew.xlog.printer.file.FilePrinter
-import java.io.File
 import java.lang.System.currentTimeMillis
 import java.util.ArrayList
 import java.util.HashMap
@@ -48,15 +42,8 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private var wakeLock: PowerManager.WakeLock? = null
 
-    override fun onCreate() {
-        super.onCreate()
-        try {
-            val file = File("$LOG_PATH/$LOG_TAG")
-            XLog.init(LogLevel.ALL, FilePrinter.Builder(file.path).build())
-        } catch (e: Exception) {
-            XLog.e(e.message)
-            Log.e(LOG_TAG, "BLENetworkObserverService: " + e.message)
-        }
+    init {
+        startXLogger()
     }
 
     override fun onDestroy() {
@@ -92,16 +79,16 @@ class BLENetworkObserverService : Service(), Runnable {
 
                 Thread(this).start()
 
-                Log.d(LOG_TAG, "--------- SERVICE STARTED ---------")
-                XLog.d("${currentTimeMillis()} |  --------- SERVICE STARTED ---------")
+                Log.d(LOG_TAG, "SERVICE STARTED")
+                XLog.d("${getActualDateString()} |  SERVICE STARTED")
             } else {
-                Log.d(LOG_TAG, "--------- SERVICE START ERROR: WiFi Bundle is NULL ---------")
-                XLog.d("${currentTimeMillis()} |  --------- SERVICE START ERROR: WiFi Bundle is NULL ---------")
+                Log.d(LOG_TAG, "SERVICE START ERROR: WiFi Bundle is NULL")
+                XLog.d("${getActualDateString()} | SERVICE START ERROR: WiFi Bundle is NULL")
 
                 networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null)
             }
         } catch (e: Exception) {
-            Log.e(LOG_TAG, e.message)
+            Log.e(LOG_TAG, "Error to init bundle | ${e.message}")
         }
 
     }
@@ -184,7 +171,7 @@ class BLENetworkObserverService : Service(), Runnable {
             }
         }
 
-        XLog.d("${currentTimeMillis()} |  --------- SERVICE ENDS ---------")
+        XLog.d("${getActualDateString()} |  --------- SERVICE ENDS ---------")
         Log.d(LOG_TAG, "--------- SERVICE ENDS ---------")
 
         // Sending the result for the result receiver telling that network observing end

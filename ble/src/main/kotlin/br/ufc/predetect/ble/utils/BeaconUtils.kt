@@ -1,51 +1,72 @@
-/*
- * Copyright 2018 neXenio
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
-
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package br.ufc.predetect.ble.utils
 
-/**
- *
- * Estimates a maximum distance at which advertising packages sent
- * using the specified transmission power can be received.
- *
- * @param transmissionPower the tx power (in dBm) of the beacon
- * @return estimated range in meters
- * @see <https://support.kontakt.io/hc/en-gb/articles/201621521-Transmission-power-Range-and-RSSI>
- *     Kontakt.io Knowledge Base
- *
- */
-fun getAdvertisingRange(transmissionPower : Int) : Double {
-    return when {
-        transmissionPower < -30 -> 1.0
-        transmissionPower < -25 -> getAdvertisingRange(transmissionPower, -30, 2)
-        transmissionPower < -18 -> getAdvertisingRange(transmissionPower, -20, 4)
-        transmissionPower < -14 -> getAdvertisingRange(transmissionPower, -16, 16)
-        transmissionPower < -10 -> getAdvertisingRange(transmissionPower, -12, 20)
-        transmissionPower < -6 -> getAdvertisingRange(transmissionPower, -8, 30)
-        transmissionPower < -2 -> getAdvertisingRange(transmissionPower, -4, 40)
-        transmissionPower < 2 -> getAdvertisingRange(transmissionPower, 0, 60)
-        else -> getAdvertisingRange(transmissionPower, 4, 70)
-    }
+import android.bluetooth.le.ScanSettings
+import android.util.Log
+import br.ufc.predetect.ble.constants.LOG_TAG
+import br.ufc.predetect.ble.data.Beacon
+import br.ufc.predetect.ble.data.BeaconBundle
+import br.ufc.predetect.ble.filters.KalmanFilter
+import br.ufc.quixada.predetect.common.utils.toByteArray
+import com.elvishew.xlog.XLog
+import java.util.*
+
+
+fun filterBeacon(advertisingPackets : List<Beacon>) : Beacon {
+    val first = advertisingPackets.first()
+    val rssFiltered = KalmanFilter().filter(advertisingPackets.map { it.rssi }).toInt()
+    val distanceFiltered = rssiToDistance(rssFiltered)
+
+    Log.d(LOG_TAG, "DISTANCE FILTERED: $distanceFiltered")
+    Log.d(LOG_TAG, "RSS FILTERED: $rssFiltered")
+
+    return Beacon(
+            macAddress = first.macAddress,
+            name = first.name,
+            rssi = rssFiltered,
+            distance = distanceFiltered
+    )
 }
 
+
 /**
- * Uses a simple rule of three equation. Transmission power values will be incremented by 100 to
- * compensate for negative values.
+ * Remove duplicated and merge with previous results
  */
-fun getAdvertisingRange(transmissionPower: Int, calibratedTransmissionPower: Int, calibratedRange: Int): Double {
-    return calibratedRange.times(transmissionPower.plus(100).div(calibratedTransmissionPower.plus(100).toDouble()))
+fun mergeBLEData(scanResults: List<Beacon>, wiFiDataSet: HashSet<Beacon>): HashSet<Beacon> {
+    val btCollection = HashSet<Beacon>()
+
+    for (oldData in wiFiDataSet) {
+        for (sr in scanResults) {
+
+            if (oldData.macAddress == sr.macAddress) {
+
+                val data = sr.copy(
+                        observeCount = oldData.observeCount,
+                        percent = oldData.percent
+                )
+
+                btCollection.add(data)
+
+                XLog.d(String.format(Locale.ENGLISH, "%s,%s,%d,%f", sr.macAddress, sr.name, sr.rssi, sr.distance))
+
+                break
+            }
+        }
+
+        btCollection.add(oldData.copy(name = if (oldData.name.isNullOrBlank()) "UNKNOWN" else oldData.name))
+    }
+
+    return btCollection
+}
+
+fun createBeaconBundle(data: List<String>, duration: Long, distance: Double): ByteArray =
+        toByteArray(BeaconBundle(data, duration, distance))
+
+fun scanSettings() : ScanSettings = ScanSettings.Builder()
+        .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+        .build()
+
+fun isValidBeacon(beacon: Beacon): Boolean {
+    return beacon.name != null &&
+            beacon.distance > 0.001
 }

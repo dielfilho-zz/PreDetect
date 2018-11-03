@@ -1,4 +1,4 @@
-package br.ufc.predetect.ble.domain
+package br.ufc.predetect.ble.data
 
 import android.os.Parcel
 import android.os.Parcelable

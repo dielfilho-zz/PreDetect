@@ -2,7 +2,7 @@ package br.ufc.predetect.ble.receivers
 
 import android.os.Handler
 import br.ufc.predetect.ble.constants.BLE_SCANNED
-import br.ufc.predetect.ble.domain.Beacon
+import br.ufc.predetect.ble.data.Beacon
 import br.ufc.predetect.ble.interfaces.BeaconObserver
 import br.ufc.quixada.predetect.common.receivers.NetworkObserverResultReceiver
 
