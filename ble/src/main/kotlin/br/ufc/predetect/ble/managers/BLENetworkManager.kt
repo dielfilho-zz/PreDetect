@@ -158,13 +158,7 @@ object BLENetworkManager : NetworkReceiver {
 
         override fun onScanFailed(errorCode: Int) {
 
-            Log.e(LOG_TAG, when (errorCode) {
-                SCAN_FAILED_ALREADY_STARTED -> "ScanCallback: Fails to start scan as BLE scan with the same settings is already started by the app"
-                SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "ScanCallback: Fails to start scan as app cannot be registered."
-                SCAN_FAILED_FEATURE_UNSUPPORTED -> "ScanCallback: Fails to start power optimized scan as this feature is not supported."
-                SCAN_FAILED_INTERNAL_ERROR -> "ScanCallback: Fails to start scan due an internal error."
-                else -> "ScanCallback: Unknown error."
-            })
+            Log.e(LOG_TAG, getMessageByErrorCodeInScanResult(errorCode))
 
             Log.d(LOG_TAG, "DISABLING BLUETOOTH AND WAIT 12 SECONDS TO ENABLED AGAIN")
 

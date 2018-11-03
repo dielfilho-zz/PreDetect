@@ -15,14 +15,12 @@ import android.util.Log
 import br.ufc.predetect.ble.constants.*
 import br.ufc.predetect.ble.data.Beacon
 import br.ufc.predetect.ble.data.BeaconBundle
-import br.ufc.predetect.ble.filters.KalmanFilter
 import br.ufc.predetect.ble.managers.BLENetworkManager
 import br.ufc.predetect.ble.utils.*
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 import br.ufc.quixada.predetect.common.utils.SLEEP_TIME
 import br.ufc.quixada.predetect.common.utils.toParcelable
 import com.elvishew.xlog.XLog
-import java.lang.System.currentTimeMillis
 import java.util.ArrayList
 import java.util.HashMap
 import kotlin.collections.HashSet
@@ -46,12 +44,110 @@ class BLENetworkObserverService : Service(), Runnable {
         startXLogger()
     }
 
-    override fun onDestroy() {
-        this.releaseBLeLock()
-        super.onDestroy()
+    companion object {
+        var timeInSeconds = 0L
+        var observedTime = 0L
+        var bleData = HashSet<Beacon>()
+        var scanResults = mutableListOf<Beacon>()
     }
 
-    override fun onBind(intent: Intent): IBinder? = null
+    override fun run() {
+
+        XLog.d("####################")
+
+        observedTime = 0L
+
+        if (beaconBundle == null) {
+            Log.e(LOG_TAG, "Bundle is null")
+        }
+
+        beaconBundle?.observeTime?.div(sleepTime)?.run {
+            timeInSeconds = this
+        }
+
+        bleData = hashSetOf()
+
+        beaconBundle?.beaconData?.forEach {
+            bleData.add(Beacon(macAddress = it))
+        }
+
+        val observerHistory = HashMap<String, MutableList<Beacon>>()
+
+        while (observedTime < timeInSeconds) {
+
+            btManager?.adapter?.bluetoothLeScanner?.run {
+                val scanCallback = scanCallback()
+
+                this.startScan(emptyList(), scanSettings(), scanCallback)
+
+                sleepThread(12)
+
+                this.stopScan(scanCallback)
+            }
+
+            if (bleData.isNotEmpty()) {
+                beaconBundle?.distanceRange?.let { distanceRange ->
+                    val srs = reduceScanResults(scanResults)
+
+                    bleData = mergeBLEData(srs, bleData)
+
+                    bleData.forEach {
+                        if (isValidBeacon(it) && it.distance <= distanceRange) {
+
+                            val newAppear = it.observeCount + 1
+                            it.observeCount = newAppear
+
+                            Log.d(LOG_TAG, "BLENetworkObserverService: OBSERVE COUNT = $newAppear")
+
+                            val newPercent = (it.observeCount * 100 / timeInSeconds).toDouble()
+                            it.percent = newPercent
+
+                            Log.d(LOG_TAG, "BLENetworkObserverService: PERCENT = $newPercent")
+
+                            Log.d(LOG_TAG, "BLENetworkObserverService: BEACON = $it")
+                        }
+
+                        if (!observerHistory.containsKey(it.macAddress)) {
+                            observerHistory[it.macAddress] = ArrayList()
+                        }
+
+                        observerHistory[it.macAddress]?.add(it)
+                    }
+
+                }
+
+                scanResults.clear()
+
+                sleepThread (60) { networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null) }
+
+                observedTime++
+            } else {
+                networkResultReceiver?.send(NetworkResultStatus.UNDEFINED.value, null)
+
+                // If there's no Beacon on ScanResults, stopping service.
+                stopSelf()
+            }
+        }
+
+        XLog.d("${getActualDateString()} |  --------- SERVICE ENDS ---------")
+        Log.d(LOG_TAG, "--------- SERVICE ENDS ---------")
+
+        // Sending the result for the result receiver telling that network observing end
+
+        val bundle = Bundle()
+        bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
+        networkResultReceiver?.send(NetworkResultStatus.SUCCESS.value, bundle)
+
+        // Send the intent for the broadcasts receivers
+
+        val intent = Intent(ACTION_OBSERVING_ENDS)
+        intent.putExtra(BUNDLE_FINISH_OBSERVING, bundle)
+        sendBroadcast(intent)
+
+        releaseBLeLock()
+
+        stopSelf()
+    }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         this.holdBLeLock()
@@ -93,103 +189,12 @@ class BLENetworkObserverService : Service(), Runnable {
 
     }
 
-    override fun run() {
-
-        XLog.d("####################")
-
-        observedTime = 0L
-
-        if (beaconBundle == null) {
-            Log.e(LOG_TAG, "Bundle is null")
-        }
-
-        beaconBundle?.observeTime?.div(sleepTime)?.run {
-            timeInSeconds = this
-        }
-
-        bleData = hashSetOf()
-
-        beaconBundle?.beaconData?.forEach {
-            bleData.add(Beacon(macAddress = it))
-        }
-
-        val observerHistory = HashMap<String, MutableList<Beacon>>()
-
-        while (observedTime < timeInSeconds) {
-
-            btManager?.adapter?.bluetoothLeScanner?.run {
-                val scanCallback = scanCallback()
-
-                this.startScan(emptyList(), scanSettings(), scanCallback)
-
-                sleep(12_000, false)
-
-                this.stopScan(scanCallback)
-            }
-
-            if (bleData.isNotEmpty()) {
-                beaconBundle?.distanceRange?.let { distanceRange ->
-                    val srs = reduceScanResults(scanResults)
-
-                    bleData = mergeBLEData(srs, bleData)
-
-                    bleData.forEach {
-                        if (isValidBeacon(it) && it.distance <= distanceRange) {
-
-                            val newAppear = it.observeCount + 1
-                            it.observeCount = newAppear
-
-                            Log.d(LOG_TAG, "BLENetworkObserverService: OBSERVE COUNT = $newAppear")
-
-                            val newPercent = (it.observeCount * 100 / timeInSeconds).toDouble()
-                            it.percent = newPercent
-
-                            Log.d(LOG_TAG, "BLENetworkObserverService: PERCENT = $newPercent")
-
-                            Log.d(LOG_TAG, "BLENetworkObserverService: BEACON = $it")
-                        }
-
-                        if (!observerHistory.containsKey(it.macAddress)) {
-                            observerHistory[it.macAddress] = ArrayList()
-                        }
-
-                        observerHistory[it.macAddress]?.add(it)
-                    }
-
-                }
-
-                scanResults.clear()
-
-                sleep()
-
-                observedTime++
-            } else {
-                networkResultReceiver?.send(NetworkResultStatus.UNDEFINED.value, null)
-
-                // If there's no Beacon on ScanResults, stopping service.
-                stopSelf()
-            }
-        }
-
-        XLog.d("${getActualDateString()} |  --------- SERVICE ENDS ---------")
-        Log.d(LOG_TAG, "--------- SERVICE ENDS ---------")
-
-        // Sending the result for the result receiver telling that network observing end
-
-        val bundle = Bundle()
-        bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
-        networkResultReceiver?.send(NetworkResultStatus.SUCCESS.value, bundle)
-
-        // Send the intent for the broadcasts receivers
-
-        val intent = Intent(ACTION_OBSERVING_ENDS)
-        intent.putExtra(BUNDLE_FINISH_OBSERVING, bundle)
-        sendBroadcast(intent)
-
-        releaseBLeLock()
-
-        stopSelf()
+    override fun onDestroy() {
+        this.releaseBLeLock()
+        super.onDestroy()
     }
+
+    override fun onBind(intent: Intent): IBinder? = null
 
     private fun scanCallback() : ScanCallback = object : ScanCallback() {
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
@@ -218,45 +223,21 @@ class BLENetworkObserverService : Service(), Runnable {
             }
         }
 
-        // Error necessary disable and enable bt again
         override fun onScanFailed(errorCode: Int) {
-            Log.e(LOG_TAG, "BLENetworkObserverService: ERROR IN SCAN $errorCode")
-            if (errorCode == 2 && BluetoothAdapter.getDefaultAdapter().disable()) {
-                Thread.sleep(12_000)
-                BluetoothAdapter.getDefaultAdapter().enable()
+            Log.e(LOG_TAG, getMessageByErrorCodeInScanResult(errorCode))
+
+            Log.d(LOG_TAG, "DISABLING BLUETOOTH AND WAIT 12 SECONDS TO ENABLED AGAIN")
+
+            BluetoothAdapter.getDefaultAdapter().run {
+                if (this.disable()) {
+                    sleepThread(12)
+                    this.enable()
+                }
             }
-            super.onScanFailed(errorCode)
         }
     }
 
-    private fun reduceScanResults(scanResults: List<Beacon>) : List<Beacon> =
-            scanResults
-                    .groupBy { it.macAddress }
-                    .map { it ->
-                        val first = it.value.first()
-                        val rssFiltered = KalmanFilter().filter(it.value.map { it.rssi }).toInt()
-                        val distanceFiltered = rssiToDistance(rssFiltered)
-
-                        Log.d(LOG_TAG, "BLENetworkObserverService: DISTANCE FILTERED: $distanceFiltered")
-                        Log.d(LOG_TAG, "BLENetworkObserverService: RSS FILTERED: $rssFiltered")
-
-                        Beacon(
-                                macAddress = it.key,
-                                name = first.name,
-                                rssi = rssFiltered,
-                                distance = distanceFiltered
-                        )
-                    }
-
-    private fun sleep(millis : Long = 60_000, sendResultError : Boolean = true) {
-        try {
-            Thread.sleep(millis)
-        } catch (e: InterruptedException) {
-            Log.e(LOG_TAG, BLE_NETWORK_SLEEP_ERROR)
-            if (sendResultError)
-                networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null)
-        }
-    }
+    // WAKE LOCK
 
     private fun holdBLeLock() {
         Log.d(LOG_TAG, "NetworkObserverService: HOLD BLE LOCK")
@@ -266,32 +247,16 @@ class BLENetworkObserverService : Service(), Runnable {
 
             if (powerManager != null) {
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
-            } else
-                XLog.e("POWER MANAGER NULL")
+            } else XLog.e("POWER MANAGER NULL")
 
             this.setReferenceCounted(false)
-
             if (!this.isHeld) this.acquire(1000)
-
         }
-
     }
 
     private fun releaseBLeLock() {
         Log.d(LOG_TAG, "NetworkObserverService: RELEASE BLE LOCK")
-
-        wakeLock?.run {
-            if (this.isHeld)
-                this.release()
-        }
-    }
-
-    // Search by other method of make this
-    companion object {
-        var timeInSeconds = 0L
-        var observedTime = 0L
-        var bleData = HashSet<Beacon>()
-        var scanResults = mutableListOf<Beacon>()
+        wakeLock?.run { if (this.isHeld) this.release() }
     }
 }
 
