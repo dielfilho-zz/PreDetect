@@ -28,10 +28,6 @@ fun filterBeacon(advertisingPackets : List<Beacon>) : Beacon {
     )
 }
 
-
-/**
- * Remove duplicated and merge with previous results
- */
 fun mergeBLEData(scanResults: List<Beacon>, wiFiDataSet: HashSet<Beacon>): HashSet<Beacon> {
     val btCollection = HashSet<Beacon>()
 
@@ -66,8 +62,8 @@ fun reduceScanResults(scanResults: List<Beacon>) : List<Beacon> = scanResults
             val rssFiltered = KalmanFilter().filter(it.value.map { it.rssi }).toInt()
             val distanceFiltered = rssiToDistance(rssFiltered)
 
-            Log.d(LOG_TAG, "BLENetworkObserverService: DISTANCE FILTERED: $distanceFiltered")
-            Log.d(LOG_TAG, "BLENetworkObserverService: RSS FILTERED: $rssFiltered")
+            Log.d(LOG_TAG, "DISTANCE FILTERED: $distanceFiltered")
+            Log.d(LOG_TAG, "RSS FILTERED: $rssFiltered")
 
             Beacon(
                     macAddress = it.key,

@@ -4,9 +4,9 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class Beacon(
-        val name : String? = "",
-        val macAddress: String = "",
-        val transmissionPower : Int = 0,
+        var name : String? = "",
+        var macAddress: String = "",
+        var transmissionPower : Int = 0,
         var distance: Double = 0.0,
         var rssi: Int = 0,
         var observeCount: Int = 0,

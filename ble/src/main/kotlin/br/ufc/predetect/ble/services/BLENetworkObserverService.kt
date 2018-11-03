@@ -4,6 +4,7 @@ import android.app.Service
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
@@ -31,7 +32,7 @@ import kotlin.collections.HashSet
  */
 class BLENetworkObserverService : Service(), Runnable {
 
-    private var sleepTime: Long = 60_000
+    private var sleepTimeInMinutes: Long = 60_000
     private var btManager: BluetoothManager? = null
     private var beaconBundle  : BeaconBundle? = null
     private var networkManager: BLENetworkManager? = null
@@ -40,12 +41,14 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private var wakeLock: PowerManager.WakeLock? = null
 
+    private var lock : Boolean = false
+
     init {
         startXLogger()
     }
 
     companion object {
-        var timeInSeconds = 0L
+        var timeToObserve = 0L
         var observedTime = 0L
         var bleData = HashSet<Beacon>()
         var scanResults = mutableListOf<Beacon>()
@@ -53,75 +56,63 @@ class BLENetworkObserverService : Service(), Runnable {
 
     override fun run() {
 
-        XLog.d("####################")
+        if (beaconBundle == null) { Log.e(LOG_TAG, "BUNDLE IS NULL") }
 
-        observedTime = 0L
+        beaconBundle?.observeTime?.div(sleepTimeInMinutes)?.run { timeToObserve = this }
 
-        if (beaconBundle == null) {
-            Log.e(LOG_TAG, "Bundle is null")
-        }
-
-        beaconBundle?.observeTime?.div(sleepTime)?.run {
-            timeInSeconds = this
-        }
-
-        bleData = hashSetOf()
-
-        beaconBundle?.beaconData?.forEach {
-            bleData.add(Beacon(macAddress = it))
-        }
+        bleData.addAll(beaconBundle?.beaconData?.map { Beacon(macAddress = it) }?.toHashSet() ?: hashSetOf())
 
         val observerHistory = HashMap<String, MutableList<Beacon>>()
 
-        while (observedTime < timeInSeconds) {
+        while (observedTime < timeToObserve) {
 
             btManager?.adapter?.bluetoothLeScanner?.run {
                 val scanCallback = scanCallback()
 
+                Log.d(LOG_TAG, "BLENetworkObserverService: START SCAN")
                 this.startScan(emptyList(), scanSettings(), scanCallback)
 
                 sleepThread(12)
 
+                Log.d(LOG_TAG, "BLENetworkObserverService: STOP SCAN")
                 this.stopScan(scanCallback)
-            }
 
-            if (bleData.isNotEmpty()) {
+                sleepThread(2)
+
+                val scansResult = reduceScanResults(scanResults)
+                Log.d(LOG_TAG, "BLENetworkObserverService: SCANS RESULTS ${scansResult.size}")
+
+                scanResults.clear()
+
                 beaconBundle?.distanceRange?.let { distanceRange ->
-                    val srs = reduceScanResults(scanResults)
 
-                    bleData = mergeBLEData(srs, bleData)
-
-                    bleData.forEach {
-                        if (isValidBeacon(it) && it.distance <= distanceRange) {
-
-                            val newAppear = it.observeCount + 1
-                            it.observeCount = newAppear
-
-                            Log.d(LOG_TAG, "BLENetworkObserverService: OBSERVE COUNT = $newAppear")
-
-                            val newPercent = (it.observeCount * 100 / timeInSeconds).toDouble()
-                            it.percent = newPercent
-
-                            Log.d(LOG_TAG, "BLENetworkObserverService: PERCENT = $newPercent")
-
-                            Log.d(LOG_TAG, "BLENetworkObserverService: BEACON = $it")
+                    bleData.forEach { beacon ->
+                        scansResult.forEach { scan ->
+                            if ( scan.macAddress == beacon.macAddress && isValidBeacon(scan) && scan.distance <= distanceRange) {
+                                beacon.name = beacon.name.orElse(scan.name)
+                                beacon.distance = scan.distance
+                                beacon.rssi = scan.rssi
+                                beacon.observeCount = beacon.observeCount + 1
+                                beacon.percent = (beacon.observeCount * 100) / timeToObserve.toDouble()
+                            }
                         }
 
-                        if (!observerHistory.containsKey(it.macAddress)) {
-                            observerHistory[it.macAddress] = ArrayList()
+                        if (!observerHistory.containsKey(beacon.macAddress)) {
+                            observerHistory[beacon.macAddress] = ArrayList()
                         }
 
-                        observerHistory[it.macAddress]?.add(it)
+                        observerHistory[beacon.macAddress]?.add(beacon)
+                        Log.d(LOG_TAG, "BLENetworkObserverService: BEACON = $beacon")
                     }
 
                 }
 
-                scanResults.clear()
-
                 sleepThread (60) { networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null) }
 
                 observedTime++
-            } else {
+            }
+
+            if (bleData.isEmpty()) {
                 networkResultReceiver?.send(NetworkResultStatus.UNDEFINED.value, null)
 
                 // If there's no Beacon on ScanResults, stopping service.
@@ -129,8 +120,8 @@ class BLENetworkObserverService : Service(), Runnable {
             }
         }
 
-        XLog.d("${getActualDateString()} |  --------- SERVICE ENDS ---------")
-        Log.d(LOG_TAG, "--------- SERVICE ENDS ---------")
+        XLog.d("${getActualDateString()} | SERVICE ENDS")
+        Log.d(LOG_TAG, "SERVICE ENDS")
 
         // Sending the result for the result receiver telling that network observing end
 
@@ -155,8 +146,8 @@ class BLENetworkObserverService : Service(), Runnable {
         networkManager = BLENetworkManager
         btManager = applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 
-        Log.d(LOG_TAG, "--------- CREATING THE SERVICE ---------")
-        XLog.d("--------- CREATING THE SERVICE ---------")
+        Log.d(LOG_TAG, "CREATING THE SERVICE")
+        XLog.d("${getActualDateString()} | CREATING THE SERVICE")
 
         initBundle(intent)
 
@@ -165,7 +156,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private fun initBundle(intent: Intent) {
         try {
-            sleepTime = intent.getLongExtra(SLEEP_TIME, 60_000)
+            sleepTimeInMinutes = intent.getLongExtra(SLEEP_TIME, 60_000)
 
             beaconBundle = toParcelable(intent.getByteArrayExtra(BLE_BUNDLE), BeaconBundle.CREATOR)
 
@@ -207,7 +198,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
             result?.run {
 
-                val name: String = if (this.device.name.isNullOrBlank()) "UNKNOWN" else this.device.name
+                val name: String = this.device.name.orElse("UNKNOWN")
                 val macAddress : String = this.device.address
                 val rss = this.rssi
                 val distance = rssiToDistance(rss)
@@ -260,3 +251,4 @@ class BLENetworkObserverService : Service(), Runnable {
     }
 }
 
+fun<String> String?.orElse(alt : String) : String = if (this == null || this == "") alt else this
