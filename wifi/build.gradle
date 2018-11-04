@@ -26,9 +26,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.elvishew:xlog:1.4.1'
     implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation project(':common')
+    implementation 'com.elvishew:xlog:1.4.1'
+    api project(':common')
 
     testImplementation 'junit:junit:4.12'
 }

@@ -17,20 +17,19 @@ import br.ufc.quixada.predetect.common.managers.NetworkResult
 
 class BLEActivity : AppCompatActivity()
         , BeaconObserver
-//        , BeaconListener
+        , BeaconListener
 {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
         // REGISTER TO RECEIVE DATA FROM BLE NETWORK
         if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, listOf(Manifest.permission.ACCESS_FINE_LOCATION).toTypedArray(), 1)
         }
 
-//        BLENetworkManager.registerListener(this)
+        BLENetworkManager.registerListener(this)
 
         BLENetworkManager.observeNetwork(
                 this,
@@ -63,31 +62,31 @@ class BLEActivity : AppCompatActivity()
     }
 
     // BLE LISTENER - RESULTS FOR EACH RSS UPDATE
-//    override fun onChange(list: List<Beacon>) {
-//        Log.i(LOG_BLE_LISTENER, "INITIALIZING DATA LISTENER CHANGE")
-//        Log.i(LOG_BLE_LISTENER, "BLE SIZE ==> ${list.size}")
-//        Log.i(LOG_BLE_LISTENER, "BLE DATA ==> $list")
-//    }
+    override fun onChange(list: List<Beacon>) {
+        Log.i(LOG_BLE_LISTENER, "INITIALIZING DATA LISTENER CHANGE")
+        Log.i(LOG_BLE_LISTENER, "BLE SIZE ==> ${list.size}")
+        Log.i(LOG_BLE_LISTENER, "BLE DATA ==> $list")
+    }
 
     override fun getListenerContext(): Context = this
 
     override fun onPause() {
-//        BLENetworkManager.unregisterListener(this)
+        BLENetworkManager.unregisterListener(this)
         super.onPause()
     }
 
     override fun onDestroy() {
-//        BLENetworkManager.unregisterListener(this)
+        BLENetworkManager.unregisterListener(this)
         super.onDestroy()
     }
 
     override fun onResume() {
         // REGISTER TO RECEIVE DATA FROM BLE NETWORK
-//        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, listOf(Manifest.permission.ACCESS_FINE_LOCATION).toTypedArray(), 1)
-//        }
+        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, listOf(Manifest.permission.ACCESS_FINE_LOCATION).toTypedArray(), 1)
+        }
 
-//        BLENetworkManager.registerListener(this)
+        BLENetworkManager.registerListener(this)
         super.onResume()
     }
 

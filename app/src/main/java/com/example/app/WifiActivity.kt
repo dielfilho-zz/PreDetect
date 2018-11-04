@@ -80,7 +80,7 @@ class WifiActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
     }
 
     companion object {
-        const val LOG_WIFI_OBSERVER = "WIFI_OBSERVER"
-        const val LOG_WIFI_LISTENER = "WIFI_LISTENER"
+        const val LOG_WIFI_OBSERVER = "PRE_DETECT__APP__WIFI_OBSERVER"
+        const val LOG_WIFI_LISTENER = "PRE_DETECT__APP__WIFI_LISTENER"
     }
 }

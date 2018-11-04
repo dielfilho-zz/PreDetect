@@ -11,8 +11,6 @@ const val BLE_BUNDLE = "BLE_BUNDLE"
 // Get result receiver object at BLENetworkObserverService class
 const val RESULT_RECEIVER = "RESULT_RECEIVER"
 
-const val BLE_NETWORK_SLEEP_ERROR = "Error at Thread Sleep in BLENetworkObserverService"
-
 // Action for start NetworkObserverService
 const val ACTION_START_OBSERVING_SERVICE = "br.ufc.predetect.ble.NETWORK_SERVICE"
 

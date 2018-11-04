@@ -41,8 +41,6 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private var wakeLock: PowerManager.WakeLock? = null
 
-    private var lock : Boolean = false
-
     init {
         startXLogger()
     }
