@@ -10,15 +10,16 @@ import br.ufc.quixada.predetect.common.interfaces.NetworkObserver
 import br.ufc.quixada.predetect.common.managers.NetworkResult
 import br.ufc.quixada.predetect.common.utils.LOG_PRE_DETECT
 import br.ufc.quixada.predetect.common.utils.OBSERVED_HISTORY
+import br.ufc.quixada.predetect.common.utils.TOKEN_OBSERVER
 
 abstract class NetworkObserverResultReceiver<D : Parcelable>(
         private val keyScanner : String,
         private val observer: NetworkObserver<D>? = null,
         handler: Handler? = null) : ResultReceiver(handler) {
 
-    private fun onResult(resultStatus: NetworkResultStatus, resultData : List<D>?, history : HashMap<String, List<D>>?) {
+    private fun onResult(resultStatus: NetworkResultStatus, resultData : List<D>?, history : HashMap<String, List<D>>?, token : String?) {
         Log.i(LOG_PRE_DETECT, "NetworkObserverResultReceiver: SEND MESSAGE TO $keyScanner OBSERVER")
-        observer?.onObservingEnds(NetworkResult(resultStatus, resultData, history ?: emptyMap()))
+        observer?.onObservingEnds(NetworkResult(resultStatus, resultData, history ?: emptyMap(), token))
     }
 
     private fun onFail() {
@@ -35,6 +36,8 @@ abstract class NetworkObserverResultReceiver<D : Parcelable>(
         @Suppress("unchecked_cast")
         val history : HashMap<String, List<D>>? = resultData?.getSerializable(OBSERVED_HISTORY) as HashMap<String, List<D>>?
 
-        this.onResult(NetworkResultStatus.fromParcelable(resultCode), values, history)
+        val token = resultData?.getString(TOKEN_OBSERVER)
+
+        this.onResult(NetworkResultStatus.fromParcelable(resultCode), values, history, token)
     }
 }

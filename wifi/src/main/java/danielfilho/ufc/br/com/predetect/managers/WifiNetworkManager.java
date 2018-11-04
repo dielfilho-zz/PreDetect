@@ -15,6 +15,7 @@ import com.elvishew.xlog.XLog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus;
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver;
@@ -27,6 +28,7 @@ import danielfilho.ufc.br.com.predetect.services.NetworkObserverService;
 import danielfilho.ufc.br.com.predetect.utils.NetworkUtils;
 
 import static br.ufc.quixada.predetect.common.utils.ConstantsKt.SLEEP_TIME;
+import static br.ufc.quixada.predetect.common.utils.ConstantsKt.TOKEN_OBSERVER;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_TAG;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.RESULT_RECEIVER;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI_BUNDLE;
@@ -63,11 +65,9 @@ public class WifiNetworkManager implements NetworkReceiver {
         }
     }
 
-    public void observeNetwork(WiFiObserver observer, List<String> wifiMACsToObserve, int timeInMinutes, double maxRangeInMeters){
-        this.observeNetwork(observer, wifiMACsToObserve, timeInMinutes, maxRangeInMeters, 1);
-    }
+    public String observeNetwork(WiFiObserver observer, List<String> wifiMACsToObserve, int timeInMinutes, double maxRangeInMeters, int sleepTimeInMinutes){
+        String token = "token" + UUID.randomUUID();
 
-    public void observeNetwork(WiFiObserver observer, List<String> wifiMACsToObserve, int timeInMinutes, double maxRangeInMeters, int sleepTimeInMinutes){
         if(wifiMACsToObserve.size() > 0) {
 
             Log.i(LOG_TAG, "WifiNetworkManager: STARTING TO OBSERVE NETWORK FOR " + sleepTimeInMinutes + " MINUTES");
@@ -76,6 +76,8 @@ public class WifiNetworkManager implements NetworkReceiver {
 
             final int sleepTimeOneMinute = 60 * 1000;
             serviceIntent.putExtra(SLEEP_TIME, sleepTimeOneMinute * sleepTimeInMinutes);
+
+            serviceIntent.putExtra(TOKEN_OBSERVER, token);
 
             serviceIntent.putExtra(WIFI_BUNDLE, NetworkUtils.createWiFiBundle(wifiMACsToObserve, timeInMinutes * sleepTimeOneMinute, maxRangeInMeters));
 
@@ -88,8 +90,9 @@ public class WifiNetworkManager implements NetworkReceiver {
         } else {
             Log.i(LOG_TAG, "WifiNetworkManager: WIFI LIST IS NULL");
 
-            observer.onObservingEnds(new NetworkResult<>(NetworkResultStatus.UNDEFINED, null, Collections.emptyMap()));
+            observer.onObservingEnds(new NetworkResult<>(NetworkResultStatus.UNDEFINED, null, Collections.emptyMap(), token));
         }
+        return token;
     }
 
     public void registerListener(WiFiListener listener){

@@ -26,7 +26,9 @@ import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
 import br.ufc.quixada.predetect.common.interfaces.NetworkReceiver
 import br.ufc.quixada.predetect.common.managers.NetworkResult
 import br.ufc.quixada.predetect.common.utils.SLEEP_TIME
+import br.ufc.quixada.predetect.common.utils.TOKEN_OBSERVER
 import com.elvishew.xlog.XLog
+import java.util.*
 
 /**
  * @author Gabriel Cesar
@@ -92,7 +94,9 @@ object BLENetworkManager : NetworkReceiver {
         }
     }
 
-    fun observeNetwork(observer: BeaconObserver, btMACsToObserve: List<String>, timeInMinutes: Int, maxRangeInMeters: Double, intervalTimeInMinutes: Int = 1) {
+    fun observeNetwork(observer: BeaconObserver, btMACsToObserve: List<String>, timeInMinutes: Int, maxRangeInMeters: Double, intervalTimeInMinutes: Int = 1) : String {
+        val token = "token${UUID.randomUUID()}"
+
         if (btMACsToObserve.isNotEmpty()) {
 
             Log.i(LOG_TAG, "BLENetworkManager: STARTING TO OBSERVE NETWORK FOR $intervalTimeInMinutes MINUTES")
@@ -101,6 +105,8 @@ object BLENetworkManager : NetworkReceiver {
 
             val sleepTimeOneMinute: Long = 60 * 1000
             serviceIntent.putExtra(SLEEP_TIME, sleepTimeOneMinute * intervalTimeInMinutes)
+
+            serviceIntent.putExtra(TOKEN_OBSERVER, token)
 
             serviceIntent.putExtra(BLE_BUNDLE, createBeaconBundle(btMACsToObserve, timeInMinutes * sleepTimeOneMinute, maxRangeInMeters))
 
@@ -114,9 +120,10 @@ object BLENetworkManager : NetworkReceiver {
 
         else  {
             Log.i(LOG_TAG, "BLENetworkManager: WIFI LIST IS NULL")
-            observer.onObservingEnds(NetworkResult(NetworkResultStatus.UNDEFINED, null, emptyMap()))
+            observer.onObservingEnds(NetworkResult(NetworkResultStatus.UNDEFINED, null, emptyMap(), token))
         }
 
+        return token
     }
 
     private fun scanCallback(): ScanCallback = object : ScanCallback() {

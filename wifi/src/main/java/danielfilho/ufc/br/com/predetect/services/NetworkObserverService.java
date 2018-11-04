@@ -32,6 +32,7 @@ import danielfilho.ufc.br.com.predetect.utils.NetworkUtils;
 
 import static br.ufc.quixada.predetect.common.utils.ConstantsKt.OBSERVED_HISTORY;
 import static br.ufc.quixada.predetect.common.utils.ConstantsKt.SLEEP_TIME;
+import static br.ufc.quixada.predetect.common.utils.ConstantsKt.TOKEN_OBSERVER;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.ACTION_OBSERVING_ENDS;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.BUNDLE_FINISH_OBSERVING;
 import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.LOG_PATH;
@@ -50,8 +51,8 @@ import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI
  *
  */
 public class NetworkObserverService extends Service implements Runnable {
-
     private Integer sleepTime;
+    private String observerToken;
     private Intent wakefulIntent;
     private WiFiBundle wiFiBundle;
     private WifiManager wifiManager;
@@ -61,74 +62,9 @@ public class NetworkObserverService extends Service implements Runnable {
     private PowerManager.WakeLock wakeLock;
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-        try {
-            File file = new File(LOG_PATH + "/" + LOG_TAG);
-            XLog.init(LogLevel.ALL, new FilePrinter.Builder(file.getPath()).build());
-        } catch (Exception e){
-            XLog.e(e.getMessage());
-            Log.e(LOG_TAG,"NetworkObserverService: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        this.holdWifiLock();
-
-        this.wifiNetworkManager = WifiNetworkManager.getInstance();
-        this.wifiNetworkManager.holdWifiLock(this);
-
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-
-        initBundle(intent);
-
-        this.wakefulIntent = intent;
-
-        return START_REDELIVER_INTENT;
-
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        this.wifiNetworkManager.releaseWifiLock();
-        this.releaseWifiLock();
-    }
-
-    private void initBundle(Intent intent){
-        try {
-            sleepTime = intent.getIntExtra(SLEEP_TIME, 60000);
-
-            wiFiBundle = ParcelableUtilsKt.toParcelable(intent.getByteArrayExtra(WIFI_BUNDLE), WiFiBundle.CREATOR);
-            networkResultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
-
-            if(wiFiBundle != null) {
-                new Thread(this).start();
-                Log.d(LOG_TAG, "--------- SERVICE STARTED ---------");
-                XLog.d(System.currentTimeMillis()+"|  --------- SERVICE STARTED ---------");
-            } else {
-                Log.d(LOG_TAG, "--------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
-                XLog.d(System.currentTimeMillis()+"|  --------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
-
-                if (networkResultReceiver != null) {
-                    networkResultReceiver.send(NetworkResultStatus.FAIL.getValue(), null);
-                    Log.d(LOG_TAG, "NetworkObserverService: FAIL NETWORK");
-                }
-            }
-        }catch (Exception e){
-            Log.e(LOG_TAG, "NetworkObserverService: " + e.getMessage());
-        }
-    }
-
-    @Override
     public void run() {
+        Bundle bundle = new Bundle();
+        bundle.putString(TOKEN_OBSERVER, observerToken);
 
         XLog.d("####################");
 
@@ -183,7 +119,9 @@ public class NetworkObserverService extends Service implements Runnable {
                     Log.e(LOG_TAG, "NetworkObserverService: Error at Thread Sleep | " + e.getMessage());
 
                     if (networkResultReceiver != null) {
-                        networkResultReceiver.send(NetworkResultStatus.FAIL.getValue(), null);
+                        bundle.putParcelableArrayList(WIFI_SCANNED, new ArrayList<>(wiFiDataSet));
+                        bundle.putSerializable(OBSERVED_HISTORY, observerHistory);
+                        networkResultReceiver.send(NetworkResultStatus.FAIL.getValue(), bundle);
                         Log.d(LOG_TAG, "NetworkObserverService: FAIL NETWORK");
                     }
                 }
@@ -206,7 +144,6 @@ public class NetworkObserverService extends Service implements Runnable {
 
         // Sending the result for the result receiver telling that network observing ends
 
-        Bundle bundle = new Bundle();
         bundle.putParcelableArrayList(WIFI_SCANNED, new ArrayList<>(wiFiDataSet));
         bundle.putSerializable(OBSERVED_HISTORY, observerHistory);
 
@@ -223,6 +160,75 @@ public class NetworkObserverService extends Service implements Runnable {
         ObservingReceiver.completeWakefulIntent(wakefulIntent);
 
         stopSelf();
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        try {
+            File file = new File(LOG_PATH + "/" + LOG_TAG);
+            XLog.init(LogLevel.ALL, new FilePrinter.Builder(file.getPath()).build());
+        } catch (Exception e){
+            XLog.e(e.getMessage());
+            Log.e(LOG_TAG,"NetworkObserverService: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        this.holdWifiLock();
+
+        this.wifiNetworkManager = WifiNetworkManager.getInstance();
+        this.wifiNetworkManager.holdWifiLock(this);
+
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+        initBundle(intent);
+
+        this.wakefulIntent = intent;
+
+        return START_REDELIVER_INTENT;
+
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        this.wifiNetworkManager.releaseWifiLock();
+        this.releaseWifiLock();
+    }
+
+    private void initBundle(Intent intent){
+        try {
+            observerToken = intent.getStringExtra(TOKEN_OBSERVER);
+
+            sleepTime = intent.getIntExtra(SLEEP_TIME, 60000);
+
+            wiFiBundle = ParcelableUtilsKt.toParcelable(intent.getByteArrayExtra(WIFI_BUNDLE), WiFiBundle.CREATOR);
+            networkResultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
+
+            if(wiFiBundle != null) {
+                new Thread(this).start();
+                Log.d(LOG_TAG, "--------- SERVICE STARTED ---------");
+                XLog.d(System.currentTimeMillis()+"|  --------- SERVICE STARTED ---------");
+            } else {
+                Log.d(LOG_TAG, "--------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
+                XLog.d(System.currentTimeMillis()+"|  --------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
+
+                if (networkResultReceiver != null) {
+                    networkResultReceiver.send(NetworkResultStatus.FAIL.getValue(), null);
+                    Log.d(LOG_TAG, "NetworkObserverService: FAIL NETWORK");
+                }
+            }
+        }catch (Exception e){
+            Log.e(LOG_TAG, "NetworkObserverService: " + e.getMessage());
+        }
     }
 
     private void holdWifiLock() {

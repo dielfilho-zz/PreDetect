@@ -4,7 +4,6 @@ import android.app.Service
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
@@ -19,7 +18,9 @@ import br.ufc.predetect.ble.data.BeaconBundle
 import br.ufc.predetect.ble.managers.BLENetworkManager
 import br.ufc.predetect.ble.utils.*
 import br.ufc.quixada.predetect.common.domain.NetworkResultStatus
+import br.ufc.quixada.predetect.common.utils.OBSERVED_HISTORY
 import br.ufc.quixada.predetect.common.utils.SLEEP_TIME
+import br.ufc.quixada.predetect.common.utils.TOKEN_OBSERVER
 import br.ufc.quixada.predetect.common.utils.toParcelable
 import com.elvishew.xlog.XLog
 import java.util.ArrayList
@@ -31,7 +32,7 @@ import kotlin.collections.HashSet
  * @since 2018
  */
 class BLENetworkObserverService : Service(), Runnable {
-
+    private var observerToken : String? = null
     private var sleepTimeInMinutes: Long = 60_000
     private var btManager: BluetoothManager? = null
     private var beaconBundle  : BeaconBundle? = null
@@ -53,6 +54,8 @@ class BLENetworkObserverService : Service(), Runnable {
     }
 
     override fun run() {
+        val bundle = Bundle()
+        bundle.putString(TOKEN_OBSERVER, observerToken)
 
         if (beaconBundle == null) { Log.e(LOG_TAG, "BUNDLE IS NULL") }
 
@@ -105,26 +108,34 @@ class BLENetworkObserverService : Service(), Runnable {
 
                 }
 
-                sleepThread (60) { networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null) }
+                sleepThread (60) {
+                    bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
+                    bundle.putSerializable(OBSERVED_HISTORY, observerHistory)
+
+                    networkResultReceiver?.send(NetworkResultStatus.FAIL.value, bundle)
+                    XLog.d("${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS FAIL")
+                }
 
                 observedTime++
             }
 
             if (bleData.isEmpty()) {
                 networkResultReceiver?.send(NetworkResultStatus.UNDEFINED.value, null)
+                XLog.d("${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS UNDEFINED")
 
                 // If there's no Beacon on ScanResults, stopping service.
                 stopSelf()
             }
         }
 
-        XLog.d("${getActualDateString()} | SERVICE ENDS")
-        Log.d(LOG_TAG, "SERVICE ENDS")
+        XLog.d("${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS SUCCESS")
+        Log.d(LOG_TAG, "SERVICE OBSERVER ENDS")
 
         // Sending the result for the result receiver telling that network observing end
 
-        val bundle = Bundle()
         bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
+        bundle.putSerializable(OBSERVED_HISTORY, observerHistory)
+
         networkResultReceiver?.send(NetworkResultStatus.SUCCESS.value, bundle)
 
         // Send the intent for the broadcasts receivers
@@ -132,8 +143,6 @@ class BLENetworkObserverService : Service(), Runnable {
         val intent = Intent(ACTION_OBSERVING_ENDS)
         intent.putExtra(BUNDLE_FINISH_OBSERVING, bundle)
         sendBroadcast(intent)
-
-        releaseBLeLock()
 
         stopSelf()
     }
@@ -154,6 +163,8 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private fun initBundle(intent: Intent) {
         try {
+            observerToken = intent.getStringExtra(TOKEN_OBSERVER)
+
             sleepTimeInMinutes = intent.getLongExtra(SLEEP_TIME, 60_000)
 
             beaconBundle = toParcelable(intent.getByteArrayExtra(BLE_BUNDLE), BeaconBundle.CREATOR)

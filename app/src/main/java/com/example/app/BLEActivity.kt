@@ -4,6 +4,7 @@ import android.Manifest
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -20,6 +21,8 @@ class BLEActivity : AppCompatActivity()
         , BeaconListener
 {
 
+    private lateinit var tokenFromObserverNetwork : String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -31,15 +34,20 @@ class BLEActivity : AppCompatActivity()
 
         BLENetworkManager.registerListener(this)
 
-        BLENetworkManager.observeNetwork(
-                this,
-                listOf("F0:C7:7F:EB:89:5E", "gg:cc:aa:bb:dd:ee"),
-                5,
-                10.0
-        )
+        AsyncTask.execute {
+            tokenFromObserverNetwork = BLENetworkManager.observeNetwork(
+                    this,
+                    listOf("F0:C7:7F:EB:89:5E", "gg:cc:aa:bb:dd:ee"),
+                    5,
+                    10.0,
+                    1
+            )
+        }
+
     }
 
     override fun onObservingEnds(networkResult: NetworkResult<Beacon>) {
+
         networkResult
                 .onSuccess {
                     Log.i(LOG_BLE_OBSERVER, "SUCCESS CONTEXT")
@@ -50,8 +58,11 @@ class BLEActivity : AppCompatActivity()
                         Log.i(LOG_BLE_OBSERVER, it.toString())
                     }
 
-                    // Show status for each MAC in each iteration
+                    // SHOW STATUS FOR EACH MAC IN EACH ITERATION
                     Log.i(LOG_BLE_OBSERVER, networkResult.observedHistory.toString())
+
+                    // TOKEN FROM OBSERVER
+                    Log.i(LOG_BLE_OBSERVER, networkResult.token)
                 }
                 .onFail {
                     Log.i(LOG_BLE_OBSERVER, "FAIL CONTEXT")

@@ -1,6 +1,7 @@
 package com.example.app
 
 import android.content.Context
+import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -13,6 +14,7 @@ import danielfilho.ufc.br.com.predetect.managers.WifiNetworkManager
 class WifiActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
 
     private lateinit var manager: WifiNetworkManager
+    private lateinit var tokenFromObserverNetwork : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,12 +26,15 @@ class WifiActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
         manager.registerListener(this)
 
         // WIFI OBSERVER - MAC ADDRESS
-        manager.observeNetwork(
-                this,
-                listOf("cc:50:0a:55:48:50", "gg:cc:aa:bb:dd:ee"),
-                2,
-                10.0
-        )
+        AsyncTask.execute {
+            tokenFromObserverNetwork = manager.observeNetwork(
+                    this,
+                    listOf("cc:50:0a:55:48:50", "gg:cc:aa:bb:dd:ee"),
+                    2,
+                    10.0,
+                    1
+            )
+        }
     }
 
     // WIFI OBSERVER - RESULT
@@ -44,8 +49,11 @@ class WifiActivity : AppCompatActivity(), WiFiListener, WiFiObserver {
                         Log.i(LOG_WIFI_OBSERVER, it.toString())
                     }
 
-                    // Show status for each MAC in each iteration
+                    // SHOW STATUS FOR EACH MAC IN EACH ITERATION
                     Log.i(LOG_WIFI_OBSERVER, networkResult.observedHistory.toString())
+
+                    // TOKEN FROM OBSERVER
+                    Log.i(LOG_WIFI_OBSERVER, networkResult.token)
                 }
                 .onFail {
                     Log.i(LOG_WIFI_OBSERVER, "FAIL CONTEXT")
