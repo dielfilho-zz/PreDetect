@@ -3,7 +3,7 @@ _A simple API for indoor application development._
 
 [![RELEASE](https://jitpack.io/v/gabrielczar/predetect.svg)](https://jitpack.io/#gabrielczar/predetect)
 
-> Also in&nbsp; [![PT-BR](https://assets-cdn.github.com/images/icons/emoji/unicode/1f1e7-1f1f7.png)](README_pt.md)
+> Also in&nbsp; <a href="README_pt.md">🇧🇷</a>
 
 ---
 
