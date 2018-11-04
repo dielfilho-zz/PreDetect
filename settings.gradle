@@ -1,1 +1,1 @@
-include ':wifi', ':ble', ':common', ':common', ':app'
+include ':wifi', ':ble', ':common', ':app'
