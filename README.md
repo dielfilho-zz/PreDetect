@@ -5,8 +5,6 @@ _A simple API for indoor application development._
 
 > Also in&nbsp; <a href="README_pt.md">🇧🇷</a>
 
----
-
 List as information (MAC, SSID, RSSI, Approximate Distance) of all networks, they are Wi-Fi or Bluetooth, close to the device.
 Possibility to get a percentage of time that a piece was close to a certain network.
 
