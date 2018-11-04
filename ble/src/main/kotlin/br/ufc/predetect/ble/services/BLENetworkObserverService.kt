@@ -243,20 +243,17 @@ class BLENetworkObserverService : Service(), Runnable {
         Log.d(LOG_TAG, "NetworkObserverService: HOLD BLE LOCK")
 
         wakeLock?.run {
-            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager?
-
-            if (powerManager != null) {
-                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
-            } else XLog.e("POWER MANAGER NULL")
-
-            this.setReferenceCounted(false)
-            if (!this.isHeld) this.acquire(1000)
+            (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+                newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG).apply {
+                    if (!isHeld) acquire(1000)
+                }
+            }
         }
     }
 
     private fun releaseBLeLock() {
         Log.d(LOG_TAG, "NetworkObserverService: RELEASE BLE LOCK")
-        wakeLock?.run { if (this.isHeld) this.release() }
+        wakeLock?.run { if (isHeld) release() }
     }
 }
 
