@@ -1,16 +1,13 @@
 package br.ufc.predetect.ble.managers
 
-import android.Manifest
-import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothAdapter.STATE_ON
+import android.bluetooth.BluetoothAdapter.STATE_TURNING_ON
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.support.annotation.RequiresPermission
-import android.support.v4.content.ContextCompat
 import android.util.Log
 import br.ufc.predetect.ble.constants.BLE_BUNDLE
 import br.ufc.predetect.ble.constants.LOG_TAG
@@ -45,16 +42,9 @@ object BLENetworkManager : NetworkReceiver {
 
     fun unregisterListener(listener: BeaconListener) = listeners?.remove(listener)
 
-    @RequiresPermission(ACCESS_FINE_LOCATION)
-    fun registerListener(listener: BeaconListener): Boolean = listener.let {
-        if (ContextCompat.checkSelfPermission(it.getListenerContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            XLog.e("${getActualDateString()} | Doesn't has permission to access location.")
-            return false
-        }
-
+    fun registerListener(listener: BeaconListener) = listener.let {
         listeners?.add(it)
         onListenerRegistered(it.getListenerContext())
-        return true
     }
 
     override fun onNetworkReceive(context: Context?, intent: Intent?) {
@@ -64,12 +54,19 @@ object BLENetworkManager : NetworkReceiver {
 
                 val btManager = context?.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager?
 
-                btManager?.adapter?.bluetoothLeScanner?.run {
-                    Log.d(LOG_TAG, "STOP PREVIOUS SCAN CALLBACK")
-                    this.stopScan(scanCallback)
+                btManager?.adapter?.run {
+                    if (state == STATE_TURNING_ON) {
+                        sleepThread(12)
+                    }
+                    if (state == STATE_ON) {
+                        bluetoothLeScanner?.run {
+                            Log.d(LOG_TAG, "STOP PREVIOUS SCAN CALLBACK")
+                            this.stopScan(scanCallback)
 
-                    Log.d(LOG_TAG, "START SCAN CALLBACK")
-                    this.startScan(emptyList(), scanSettings(), scanCallback)
+                            Log.d(LOG_TAG, "START SCAN CALLBACK")
+                            this.startScan(emptyList(), scanSettings(), scanCallback)
+                        }
+                    }
                 }
             }
         }
@@ -85,13 +82,28 @@ object BLENetworkManager : NetworkReceiver {
             Log.e(LOG_TAG, "No Bluetooth LE found.")
         }
 
-        btManager?.adapter?.bluetoothLeScanner?.run {
-            Log.d(LOG_TAG, "STOP PREVIOUS SCAN CALLBACK")
-            this.stopScan(scanCallback)
-
-            Log.d(LOG_TAG, "START SCAN CALLBACK")
-            this.startScan(emptyList(), scanSettings(), scanCallback)
+        if (btManager?.adapter == null) {
+            Log.e(LOG_TAG, "Bluetooth Adapter is off.")
         }
+
+        btManager?.adapter?.run {
+            if (state == STATE_TURNING_ON) {
+                Log.d(LOG_TAG, "WAIT 12 SECONDS TO ENABLE BLUETOOTH")
+                sleepThread(12)
+            }
+            if (state == STATE_ON) {
+                Log.d(LOG_TAG, "BLUETOOTH ENABLED")
+
+                bluetoothLeScanner?.run {
+                    Log.d(LOG_TAG, "STOP PREVIOUS SCAN CALLBACK")
+                    this.stopScan(scanCallback)
+
+                    Log.d(LOG_TAG, "START SCAN CALLBACK")
+                    this.startScan(emptyList(), scanSettings(), scanCallback)
+                }
+            }
+        }
+
     }
 
     fun observeNetwork(observer: BeaconObserver, btMACsToObserve: List<String>, timeInMinutes: Int, maxRangeInMeters: Double, intervalTimeInMinutes: Int) : String {
@@ -135,8 +147,6 @@ object BLENetworkManager : NetworkReceiver {
         }
 
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            Log.d(LOG_TAG, "BLENetworkManager: HAS RESULT")
-
             result?.run {
 
                 val name: String = this.device.name ?: "UNKNOWN"
@@ -158,6 +168,7 @@ object BLENetworkManager : NetworkReceiver {
                 beaconsBatch[macAddress]?.add(beacon)
 
                 XLog.i("${getActualDateString()} | HAS RESULT ON SCAN | $beacon")
+                Log.d(LOG_TAG, "BLENetworkManager: ${getActualDateString()} | HAS RESULT ON SCAN | $beacon")
 
                 updateListeners()
             }
