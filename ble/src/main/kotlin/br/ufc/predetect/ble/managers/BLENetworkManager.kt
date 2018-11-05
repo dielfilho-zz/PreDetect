@@ -94,17 +94,18 @@ object BLENetworkManager : NetworkReceiver {
         }
     }
 
-    fun observeNetwork(observer: BeaconObserver, btMACsToObserve: List<String>, timeInMinutes: Int, maxRangeInMeters: Double, intervalTimeInMinutes: Int = 1) : String {
+    fun observeNetwork(observer: BeaconObserver, btMACsToObserve: List<String>, timeInMinutes: Int, maxRangeInMeters: Double, intervalTimeInMinutes: Int) : String {
         val token = "token${UUID.randomUUID()}"
 
         if (btMACsToObserve.isNotEmpty()) {
 
-            Log.i(LOG_TAG, "BLENetworkManager: STARTING TO OBSERVE NETWORK FOR $intervalTimeInMinutes MINUTES")
+            Log.i(LOG_TAG, "BLENetworkManager: STARTING TO OBSERVE NETWORK FOR EACH $intervalTimeInMinutes MINUTES")
 
             val serviceIntent = Intent(observer.getListenerContext(), BLENetworkObserverService::class.java)
 
-            val sleepTimeOneMinute: Long = 60 * 1000
-            serviceIntent.putExtra(SLEEP_TIME, sleepTimeOneMinute * intervalTimeInMinutes)
+            val sleepTimeOneMinute: Long = 60_000
+
+            serviceIntent.putExtra(SLEEP_TIME, intervalTimeInMinutes * sleepTimeOneMinute)
 
             serviceIntent.putExtra(TOKEN_OBSERVER, token)
 

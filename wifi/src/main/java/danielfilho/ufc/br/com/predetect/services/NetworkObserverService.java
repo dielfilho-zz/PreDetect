@@ -51,7 +51,7 @@ import static danielfilho.ufc.br.com.predetect.constants.PreDetectConstants.WIFI
  *
  */
 public class NetworkObserverService extends Service implements Runnable {
-    private Integer sleepTime;
+    private Long sleepTime;
     private String observerToken;
     private Intent wakefulIntent;
     private WiFiBundle wiFiBundle;
@@ -70,7 +70,7 @@ public class NetworkObserverService extends Service implements Runnable {
 
         int observedTime = 0;
 
-        int timeInSeconds = wiFiBundle.getObserveTime() / sleepTime;
+        Long timeInSeconds = wiFiBundle.getObserveTime() / sleepTime;
 
         HashSet<WiFiData> wiFiDataSet = new HashSet<>();
 
@@ -208,15 +208,18 @@ public class NetworkObserverService extends Service implements Runnable {
         try {
             observerToken = intent.getStringExtra(TOKEN_OBSERVER);
 
-            sleepTime = intent.getIntExtra(SLEEP_TIME, 60000);
+            sleepTime = intent.getLongExtra(SLEEP_TIME, 60_000);
 
             wiFiBundle = ParcelableUtilsKt.toParcelable(intent.getByteArrayExtra(WIFI_BUNDLE), WiFiBundle.CREATOR);
             networkResultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
 
             if(wiFiBundle != null) {
                 new Thread(this).start();
-                Log.d(LOG_TAG, "--------- SERVICE STARTED ---------");
-                XLog.d(System.currentTimeMillis()+"|  --------- SERVICE STARTED ---------");
+                String message = "SERVICE STARTED | OBSERVER TOKEN=" + observerToken +
+                        " | SLEEP TIME=" + sleepTime + " | DURATION=" + wiFiBundle.getObserveTime();
+
+                Log.d(LOG_TAG,  message);
+                XLog.d(System.currentTimeMillis()+" | " + message);
             } else {
                 Log.d(LOG_TAG, "--------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
                 XLog.d(System.currentTimeMillis()+"|  --------- SERVICE START ERROR: WiFi Bundle is NULL ---------");
@@ -233,11 +236,12 @@ public class NetworkObserverService extends Service implements Runnable {
 
     private void holdWifiLock() {
         Log.d(LOG_TAG, "NetworkObserverService: HOLD WIFI LOCK");
+
         if(wakeLock == null){
             final PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
             if (powerManager != null) {
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG);
-            } else XLog.e("POWER MANAGER NULL");
+            }
         }
 
         wakeLock.setReferenceCounted(false);

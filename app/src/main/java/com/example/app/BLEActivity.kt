@@ -11,14 +11,13 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import br.ufc.predetect.ble.data.Beacon
-import br.ufc.predetect.ble.interfaces.BeaconListener
 import br.ufc.predetect.ble.interfaces.BeaconObserver
 import br.ufc.predetect.ble.managers.BLENetworkManager
 import br.ufc.quixada.predetect.common.managers.NetworkResult
 
 class BLEActivity : AppCompatActivity()
         , BeaconObserver
-        , BeaconListener
+//        , BeaconListener
 {
 
     private lateinit var tokenFromObserverNetwork : String
@@ -32,15 +31,15 @@ class BLEActivity : AppCompatActivity()
             ActivityCompat.requestPermissions(this, listOf(Manifest.permission.ACCESS_FINE_LOCATION).toTypedArray(), 1)
         }
 
-        BLENetworkManager.registerListener(this)
+//        BLENetworkManager.registerListener(this)
 
         AsyncTask.execute {
             tokenFromObserverNetwork = BLENetworkManager.observeNetwork(
                     this,
                     listOf("F0:C7:7F:EB:89:5E", "gg:cc:aa:bb:dd:ee"),
-                    5,
+                    240,
                     10.0,
-                    1
+                    30
             )
         }
 
@@ -73,31 +72,31 @@ class BLEActivity : AppCompatActivity()
     }
 
     // BLE LISTENER - RESULTS FOR EACH RSS UPDATE
-    override fun onChange(list: List<Beacon>) {
-        Log.i(LOG_BLE_LISTENER, "INITIALIZING DATA LISTENER CHANGE")
-        Log.i(LOG_BLE_LISTENER, "BLE SIZE ==> ${list.size}")
-        Log.i(LOG_BLE_LISTENER, "BLE DATA ==> $list")
-    }
+//    override fun onChange(list: List<Beacon>) {
+//        Log.i(LOG_BLE_LISTENER, "INITIALIZING DATA LISTENER CHANGE")
+//        Log.i(LOG_BLE_LISTENER, "BLE SIZE ==> ${list.size}")
+//        Log.i(LOG_BLE_LISTENER, "BLE DATA ==> $list")
+//    }
 
     override fun getListenerContext(): Context = this
 
     override fun onPause() {
-        BLENetworkManager.unregisterListener(this)
+//        BLENetworkManager.unregisterListener(this)
         super.onPause()
     }
 
     override fun onDestroy() {
-        BLENetworkManager.unregisterListener(this)
+//        BLENetworkManager.unregisterListener(this)
         super.onDestroy()
     }
 
     override fun onResume() {
         // REGISTER TO RECEIVE DATA FROM BLE NETWORK
-        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, listOf(Manifest.permission.ACCESS_FINE_LOCATION).toTypedArray(), 1)
-        }
-
-        BLENetworkManager.registerListener(this)
+//        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, listOf(Manifest.permission.ACCESS_FINE_LOCATION).toTypedArray(), 1)
+//        }
+//
+//        BLENetworkManager.registerListener(this)
         super.onResume()
     }
 

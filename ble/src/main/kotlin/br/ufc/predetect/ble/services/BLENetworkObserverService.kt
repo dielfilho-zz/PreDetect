@@ -33,7 +33,7 @@ import kotlin.collections.HashSet
  */
 class BLENetworkObserverService : Service(), Runnable {
     private var observerToken : String? = null
-    private var sleepTimeInMinutes: Long = 60_000
+    private var sleepTime: Long = 60_000
     private var btManager: BluetoothManager? = null
     private var beaconBundle  : BeaconBundle? = null
     private var networkManager: BLENetworkManager? = null
@@ -59,7 +59,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
         if (beaconBundle == null) { Log.e(LOG_TAG, "BUNDLE IS NULL") }
 
-        beaconBundle?.observeTime?.div(sleepTimeInMinutes)?.run { timeToObserve = this }
+        beaconBundle?.observeTime?.div(sleepTime)?.run { timeToObserve = this }
 
         bleData.addAll(beaconBundle?.beaconData?.map { Beacon(macAddress = it) }?.toHashSet() ?: hashSetOf())
 
@@ -108,7 +108,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
                 }
 
-                sleepThread (60) {
+                sleepThread (sleepTime) {
                     bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
                     bundle.putSerializable(OBSERVED_HISTORY, observerHistory)
 
@@ -165,7 +165,7 @@ class BLENetworkObserverService : Service(), Runnable {
         try {
             observerToken = intent.getStringExtra(TOKEN_OBSERVER)
 
-            sleepTimeInMinutes = intent.getLongExtra(SLEEP_TIME, 60_000)
+            sleepTime = intent.getLongExtra(SLEEP_TIME, 60_000)
 
             beaconBundle = toParcelable(intent.getByteArrayExtra(BLE_BUNDLE), BeaconBundle.CREATOR)
 
@@ -175,8 +175,9 @@ class BLENetworkObserverService : Service(), Runnable {
 
                 Thread(this).start()
 
-                Log.d(LOG_TAG, "SERVICE STARTED")
-                XLog.d("${getActualDateString()} |  SERVICE STARTED")
+                val message = "SERVICE STARTED | OBSERVER TOKEN=$observerToken | SLEEP TIME=$sleepTime | DURATION=${beaconBundle?.observeTime}"
+                Log.d(LOG_TAG, message)
+                XLog.d("${getActualDateString()} | $message")
             } else {
                 Log.d(LOG_TAG, "SERVICE START ERROR: WiFi Bundle is NULL")
                 XLog.d("${getActualDateString()} | SERVICE START ERROR: WiFi Bundle is NULL")
@@ -245,6 +246,7 @@ class BLENetworkObserverService : Service(), Runnable {
         wakeLock?.run {
             (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
                 newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG).apply {
+                    setReferenceCounted(false)
                     if (!isHeld) acquire(1000)
                 }
             }
