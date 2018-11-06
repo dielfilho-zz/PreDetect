@@ -57,7 +57,7 @@ class BLENetworkObserverService : Service(), Runnable {
         val bundle = Bundle()
         bundle.putString(TOKEN_OBSERVER, observerToken)
 
-        if (beaconBundle == null) { Log.e(LOG_TAG, "BUNDLE IS NULL") }
+        if (beaconBundle == null) { Log.e(LOG_TAG, "BLENetworkObserverService: BUNDLE IS NULL") }
 
         beaconBundle?.observeTime?.div(sleepTime)?.run { timeToObserve = this }
 
@@ -69,11 +69,11 @@ class BLENetworkObserverService : Service(), Runnable {
 
             btManager?.adapter?.run {
                 if (state == BluetoothAdapter.STATE_TURNING_ON) {
-                    Log.d(LOG_TAG, "WAIT 12 SECONDS TO ENABLE BLUETOOTH")
+                    Log.d(LOG_TAG, "BLENetworkObserverService: WAIT 12 SECONDS TO ENABLE BLUETOOTH")
                     sleepThread(12)
                 }
                 if (state == BluetoothAdapter.STATE_ON) {
-                    Log.d(LOG_TAG, "BLUETOOTH ENABLED")
+                    Log.d(LOG_TAG, "BLENetworkObserverService: BLUETOOTH ENABLED")
 
                     bluetoothLeScanner?.run {
                         val scanCallback = scanCallback()
@@ -111,7 +111,7 @@ class BLENetworkObserverService : Service(), Runnable {
                                 }
 
                                 observerHistory[beacon.macAddress]?.add(beacon)
-                                Log.d(LOG_TAG, "BLENetworkObserverService: BEACON = $beacon")
+                                Log.d(LOG_TAG, "BLENetworkObserverService: ITERATION $observedTime | BEACON = $beacon")
                             }
 
                         }
@@ -121,7 +121,7 @@ class BLENetworkObserverService : Service(), Runnable {
                             bundle.putSerializable(OBSERVED_HISTORY, observerHistory)
 
                             networkResultReceiver?.send(NetworkResultStatus.FAIL.value, bundle)
-                            XLog.d("${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS FAIL")
+                            XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS FAIL")
                         }
 
                         observedTime++
@@ -131,15 +131,15 @@ class BLENetworkObserverService : Service(), Runnable {
 
             if (bleData.isEmpty()) {
                 networkResultReceiver?.send(NetworkResultStatus.UNDEFINED.value, null)
-                XLog.d("${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS UNDEFINED")
+                XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS UNDEFINED")
 
                 // If there's no Beacon on ScanResults, stopping service.
                 stopSelf()
             }
         }
 
-        XLog.d("${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS SUCCESS")
-        Log.d(LOG_TAG, "SERVICE OBSERVER ENDS")
+        XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS SUCCESS")
+        Log.d(LOG_TAG, "BLENetworkObserverService: SERVICE OBSERVER ENDS")
 
         // Sending the result for the result receiver telling that network observing end
 
@@ -163,8 +163,8 @@ class BLENetworkObserverService : Service(), Runnable {
         networkManager = BLENetworkManager
         btManager = applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 
-        Log.d(LOG_TAG, "CREATING THE SERVICE")
-        XLog.d("${getActualDateString()} | CREATING THE SERVICE")
+        Log.d(LOG_TAG, "OnStartCommand: CREATING THE SERVICE")
+        XLog.d("OnStartCommand: ${getActualDateString()} | CREATING THE SERVICE")
 
         initBundle(intent)
 
@@ -186,16 +186,16 @@ class BLENetworkObserverService : Service(), Runnable {
                 Thread(this).start()
 
                 val message = "SERVICE STARTED | OBSERVER TOKEN=$observerToken | SLEEP TIME=$sleepTime | DURATION=${beaconBundle?.observeTime}"
-                Log.d(LOG_TAG, message)
-                XLog.d("${getActualDateString()} | $message")
+                Log.d(LOG_TAG, "InitBundle: $message")
+                XLog.d("InitBundle: ${getActualDateString()} | $message")
             } else {
-                Log.d(LOG_TAG, "SERVICE START ERROR: WiFi Bundle is NULL")
-                XLog.d("${getActualDateString()} | SERVICE START ERROR: WiFi Bundle is NULL")
+                Log.d(LOG_TAG, "InitBundle: SERVICE START ERROR: WiFi Bundle is NULL")
+                XLog.d("InitBundle: ${getActualDateString()} | SERVICE START ERROR: WiFi Bundle is NULL")
 
                 networkResultReceiver?.send(NetworkResultStatus.FAIL.value, null)
             }
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "Error to init bundle | ${e.message}")
+            Log.e(LOG_TAG, "InitBundle: Error to init bundle | ${e.message}")
         }
 
     }
@@ -209,7 +209,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private fun scanCallback() : ScanCallback = object : ScanCallback() {
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
-            Log.d(LOG_TAG, "BLENetworkObserverService: HAS BATCH ${results?.size}")
+            Log.d(LOG_TAG, "ScanCallback: HAS BATCH ${results?.size}")
             super.onBatchScanResults(results)
         }
 
@@ -228,18 +228,18 @@ class BLENetworkObserverService : Service(), Runnable {
                         distance = distance
                 )
 
-                Log.d(LOG_TAG, "BLENetworkObserverService: HAS RESULT | $beacon")
+                Log.d(LOG_TAG, "ScanCallback: HAS RESULT | $beacon")
 
                 scanResults.add(beacon)
 
-                Log.d(LOG_TAG, "BLENetworkObserverService: SCAN RESULTS SIZE = ${scanResults.size}")
+                Log.d(LOG_TAG, "ScanCallback: SCAN RESULTS SIZE = ${scanResults.size}")
             }
         }
 
         override fun onScanFailed(errorCode: Int) {
-            Log.e(LOG_TAG, getMessageByErrorCodeInScanResult(errorCode))
+            Log.e(LOG_TAG, "ScanCallback: " + getMessageByErrorCodeInScanResult(errorCode))
 
-            Log.d(LOG_TAG, "DISABLING BLUETOOTH AND WAIT 12 SECONDS TO ENABLED AGAIN")
+            Log.d(LOG_TAG, "ScanCallback: DISABLING BLUETOOTH AND WAIT 12 SECONDS TO ENABLED AGAIN")
 
             BluetoothAdapter.getDefaultAdapter().run {
                 if (disable()) {
@@ -253,7 +253,7 @@ class BLENetworkObserverService : Service(), Runnable {
     // WAKE LOCK
 
     private fun holdBLeLock() {
-        Log.d(LOG_TAG, "NetworkObserverService: HOLD BLE LOCK")
+        Log.d(LOG_TAG, "BLELock: HOLD BLE LOCK")
 
         wakeLock?.run {
             (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -266,7 +266,7 @@ class BLENetworkObserverService : Service(), Runnable {
     }
 
     private fun releaseBLeLock() {
-        Log.d(LOG_TAG, "NetworkObserverService: RELEASE BLE LOCK")
+        Log.d(LOG_TAG, "BLELock: RELEASE BLE LOCK")
         wakeLock?.run { if (isHeld) release() }
     }
 }
