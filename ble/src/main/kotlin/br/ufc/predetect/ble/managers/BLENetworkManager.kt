@@ -34,6 +34,8 @@ import java.util.*
  */
 
 object BLENetworkManager : NetworkReceiver {
+    private const val TWELVE_SECONDS = 12_000L
+
     private val scanCallback = scanCallback()
     private val listeners: MutableList<BeaconListener>? = mutableListOf()
 
@@ -57,7 +59,7 @@ object BLENetworkManager : NetworkReceiver {
 
                 btManager?.adapter?.run {
                     if (state == STATE_TURNING_ON) {
-                        sleepThread(12)
+                        sleepThread(TWELVE_SECONDS)
                     }
                     if (state == STATE_ON) {
                         bluetoothLeScanner?.run {
@@ -90,7 +92,7 @@ object BLENetworkManager : NetworkReceiver {
         btManager?.adapter?.run {
             if (state == STATE_TURNING_ON) {
                 Log.d(LOG_TAG, "WAIT 12 SECONDS TO ENABLE BLUETOOTH")
-                sleepThread(12)
+                sleepThread(TWELVE_SECONDS)
             }
             if (state == STATE_ON) {
                 Log.d(LOG_TAG, "BLUETOOTH ENABLED")
@@ -127,12 +129,6 @@ object BLENetworkManager : NetworkReceiver {
             val resultReceiver = BLENetworkResultReceiver(observer)
 
             serviceIntent.putExtra(RESULT_RECEIVER, resultReceiver)
-
-            observer.getListenerContext().startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0)
-            })
-
-            sleepThread(12)
 
             observer.getListenerContext().startService(serviceIntent)
 
@@ -189,7 +185,7 @@ object BLENetworkManager : NetworkReceiver {
             Log.d(LOG_TAG, "DISABLING BLUETOOTH AND WAIT 12 SECONDS TO ENABLED AGAIN")
 
             if (BluetoothAdapter.getDefaultAdapter().disable()) {
-                sleepThread(12)
+                sleepThread(TWELVE_SECONDS)
                 BluetoothAdapter.getDefaultAdapter().enable()
             }
 
@@ -197,7 +193,7 @@ object BLENetworkManager : NetworkReceiver {
 
     }
 
-    private fun updateListeners(timeToWaitInSeconds: Long = 12) {
+    private fun updateListeners(timeToWaitInMillis: Long = TWELVE_SECONDS) {
         var updateListeners = false
 
         // Search in batch and if has 100 or more values in some list so update listeners
@@ -207,13 +203,13 @@ object BLENetworkManager : NetworkReceiver {
             updateListeners = true
 
         if (updateListeners) {
-            Log.d(LOG_TAG, "NOTIFY LISTENERS AND WAIT $timeToWaitInSeconds SECONDS")
+            Log.d(LOG_TAG, "NOTIFY LISTENERS AND WAIT $timeToWaitInMillis MILLISECONDS")
 
             notifyWiFiListeners(beaconsBatch.values.map { filterBeacon(it) }.toList())
 
             beaconsBatch.clear()
 
-            sleepThread(timeToWaitInSeconds)
+            sleepThread(timeToWaitInMillis)
         }
     }
 

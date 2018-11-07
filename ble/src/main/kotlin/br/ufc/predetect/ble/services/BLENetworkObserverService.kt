@@ -32,6 +32,8 @@ import kotlin.collections.HashSet
  * @since 2018
  */
 class BLENetworkObserverService : Service(), Runnable {
+    private val startTime = System.currentTimeMillis()
+
     private var observerToken : String? = null
     private var sleepTime: Long = 1800_000 // Default 30 minutes
     private var btManager: BluetoothManager? = null
@@ -51,6 +53,9 @@ class BLENetworkObserverService : Service(), Runnable {
         var observedTime = 0L
         var bleData = HashSet<Beacon>()
         var scanResults = mutableListOf<Beacon>()
+
+        private const val TWELVE_SECONDS = 12_000L
+        private const val TWO_SECONDS = 2_000L
     }
 
     override fun run() {
@@ -65,28 +70,37 @@ class BLENetworkObserverService : Service(), Runnable {
 
         val observerHistory = HashMap<String, MutableList<Beacon>>()
 
+        if (bleData.isEmpty()) {
+            networkResultReceiver?.send(NetworkResultStatus.UNDEFINED.value, null)
+            XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS UNDEFINED")
+
+            // If there's no Beacon on ScanResults, stopping service.
+            stopSelf()
+        }
+
         while (observedTime < timeToObserve) {
+
+            adapterUpdateAfterEveryOneHour()
 
             btManager?.adapter?.run {
                 if (state == BluetoothAdapter.STATE_TURNING_ON) {
                     Log.d(LOG_TAG, "BLENetworkObserverService: WAIT 12 SECONDS TO ENABLE BLUETOOTH")
-                    sleepThread(12)
+                    sleepThread(TWELVE_SECONDS)
                 }
                 if (state == BluetoothAdapter.STATE_ON) {
                     Log.d(LOG_TAG, "BLENetworkObserverService: BLUETOOTH ENABLED")
 
                     bluetoothLeScanner?.run {
-                        val scanCallback = scanCallback()
 
                         Log.d(LOG_TAG, "BLENetworkObserverService: START SCAN")
-                        this.startScan(emptyList(), scanSettings(), scanCallback)
+                        this.startScan(emptyList(), scanSettings(), scanCallback())
 
-                        sleepThread(12)
+                        sleepThread(TWELVE_SECONDS)
 
                         Log.d(LOG_TAG, "BLENetworkObserverService: STOP SCAN")
-                        this.stopScan(scanCallback)
+                        this.stopScan(scanCallback())
 
-                        sleepThread(2)
+                        sleepThread(TWO_SECONDS)
 
                         val scansResult = reduceScanResults(scanResults)
                         Log.d(LOG_TAG, "BLENetworkObserverService: SCANS RESULTS ${scansResult.size}")
@@ -116,7 +130,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
                         }
 
-                        sleepThread(sleepTime / 1000) {
+                        sleepThread(sleepTime) {
                             bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
                             bundle.putSerializable(OBSERVED_HISTORY, observerHistory)
 
@@ -127,14 +141,6 @@ class BLENetworkObserverService : Service(), Runnable {
                         observedTime++
                     }
                 }
-            }
-
-            if (bleData.isEmpty()) {
-                networkResultReceiver?.send(NetworkResultStatus.UNDEFINED.value, null)
-                XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS UNDEFINED")
-
-                // If there's no Beacon on ScanResults, stopping service.
-                stopSelf()
             }
         }
 
@@ -208,6 +214,7 @@ class BLENetworkObserverService : Service(), Runnable {
     override fun onBind(intent: Intent): IBinder? = null
 
     private fun scanCallback() : ScanCallback = object : ScanCallback() {
+
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
             Log.d(LOG_TAG, "ScanCallback: HAS BATCH ${results?.size}")
             super.onBatchScanResults(results)
@@ -231,8 +238,6 @@ class BLENetworkObserverService : Service(), Runnable {
                 Log.d(LOG_TAG, "ScanCallback: HAS RESULT | $beacon")
 
                 scanResults.add(beacon)
-
-                Log.d(LOG_TAG, "ScanCallback: SCAN RESULTS SIZE = ${scanResults.size}")
             }
         }
 
@@ -243,7 +248,21 @@ class BLENetworkObserverService : Service(), Runnable {
 
             BluetoothAdapter.getDefaultAdapter().run {
                 if (disable()) {
-                    sleepThread(12)
+                    sleepThread(TWELVE_SECONDS)
+                    enable()
+                }
+            }
+        }
+    }
+
+    // UPDATE BLE
+    private fun adapterUpdateAfterEveryOneHour() {
+        if (((System.currentTimeMillis() - startTime) % 3_600_000) == 0L) {
+            // make something to back to work after one hour
+
+            BluetoothAdapter.getDefaultAdapter().run {
+                if (disable()) {
+                    sleepThread(TWELVE_SECONDS)
                     enable()
                 }
             }

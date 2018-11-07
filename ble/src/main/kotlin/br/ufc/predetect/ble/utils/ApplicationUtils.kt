@@ -10,7 +10,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun sleepThread(seconds : Long, callbackError : (()-> Unit) = {}) = try { Thread.sleep(seconds * 1000) } catch (e : Exception) { Log.e(LOG_TAG, "Error in Thread Sleep | $e"); callbackError() }
+fun sleepThread(millis : Long, callbackError : (()-> Unit) = {}) = try { Thread.sleep(millis) } catch (e : Exception) { Log.e(LOG_TAG, "Error in Thread Sleep | $e"); callbackError() }
 
 fun getActualDateString() : String = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.DEFAULT, SimpleDateFormat.DEFAULT, Locale.US).format(Date())
 
