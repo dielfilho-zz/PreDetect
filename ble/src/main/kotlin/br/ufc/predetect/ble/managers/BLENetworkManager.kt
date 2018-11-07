@@ -27,6 +27,7 @@ import br.ufc.quixada.predetect.common.utils.TOKEN_OBSERVER
 import com.elvishew.xlog.XLog
 import java.util.*
 
+
 /**
  * @author Gabriel Cesar
  * @since 2018
@@ -126,6 +127,12 @@ object BLENetworkManager : NetworkReceiver {
             val resultReceiver = BLENetworkResultReceiver(observer)
 
             serviceIntent.putExtra(RESULT_RECEIVER, resultReceiver)
+
+            observer.getListenerContext().startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0)
+            })
+
+            sleepThread(12)
 
             observer.getListenerContext().startService(serviceIntent)
 

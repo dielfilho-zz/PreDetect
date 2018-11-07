@@ -111,7 +111,7 @@ class BLENetworkObserverService : Service(), Runnable {
                                 }
 
                                 observerHistory[beacon.macAddress]?.add(beacon)
-                                Log.d(LOG_TAG, "BLENetworkObserverService: ITERATION $observedTime | BEACON = $beacon")
+                                Log.d(LOG_TAG, "BLENetworkObserverService: TOKEN $observerToken | ITERATION $observedTime | BEACON = $beacon")
                             }
 
                         }
