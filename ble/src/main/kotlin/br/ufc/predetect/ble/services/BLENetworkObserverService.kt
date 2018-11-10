@@ -23,9 +23,8 @@ import br.ufc.quixada.predetect.common.utils.SLEEP_TIME
 import br.ufc.quixada.predetect.common.utils.TOKEN_OBSERVER
 import br.ufc.quixada.predetect.common.utils.toParcelable
 import com.elvishew.xlog.XLog
-import java.util.ArrayList
-import java.util.HashMap
-import kotlin.collections.HashSet
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * @author Gabriel Cesar
@@ -49,16 +48,17 @@ class BLENetworkObserverService : Service(), Runnable {
     }
 
     companion object {
-        var timeToObserve = 0L
-        var observedTime = 0L
-        var bleData = HashSet<Beacon>()
-        var scanResults = mutableListOf<Beacon>()
+        var bleData = ConcurrentLinkedQueue<Beacon>()
+        var scanResults = ConcurrentLinkedQueue<Beacon>()
 
         private const val TWELVE_SECONDS = 12_000L
         private const val TWO_SECONDS = 2_000L
     }
 
     override fun run() {
+        var timeToObserve = 0L
+        var observedTime = 0L
+
         val bundle = Bundle()
         bundle.putString(TOKEN_OBSERVER, observerToken)
 
@@ -82,66 +82,88 @@ class BLENetworkObserverService : Service(), Runnable {
 
             adapterUpdateAfterEveryOneHour()
 
+            try {
+                bleData.forEach { it.iterationExecuted = observedTime.toString().toInt().plus(1) }
+            } catch (e : Exception) {
+                Log.e(LOG_TAG, "BLENetworkObserverService: Error to increment iteration for each data in BleData. ${e.message}")
+            }
+
             btManager?.adapter?.run {
                 if (state == BluetoothAdapter.STATE_TURNING_ON) {
                     Log.d(LOG_TAG, "BLENetworkObserverService: WAIT 12 SECONDS TO ENABLE BLUETOOTH")
                     sleepThread(TWELVE_SECONDS)
                 }
+
                 if (state == BluetoothAdapter.STATE_ON) {
                     Log.d(LOG_TAG, "BLENetworkObserverService: BLUETOOTH ENABLED")
 
                     bluetoothLeScanner?.run {
 
+                        val scanCallback = scanCallback()
+
                         Log.d(LOG_TAG, "BLENetworkObserverService: START SCAN")
-                        this.startScan(emptyList(), scanSettings(), scanCallback())
+                        this.startScan(emptyList(), scanSettings(), scanCallback)
 
                         sleepThread(TWELVE_SECONDS)
 
                         Log.d(LOG_TAG, "BLENetworkObserverService: STOP SCAN")
-                        this.stopScan(scanCallback())
+                        this.stopScan(scanCallback)
 
                         sleepThread(TWO_SECONDS)
 
-                        val scansResult = reduceScanResults(scanResults)
-                        Log.d(LOG_TAG, "BLENetworkObserverService: SCANS RESULTS ${scansResult.size}")
+                        var scansResult = emptyList<Beacon>()
 
-                        scanResults.clear()
+                        try {
+                            scansResult = reduceScanResults(scanResults)
+                            Log.d(LOG_TAG, "BLENetworkObserverService: SCANS RESULTS ${scansResult.size}")
 
-                        beaconBundle?.distanceRange?.let { distanceRange ->
+                            scanResults.clear()
+                        } catch (e : Exception) {
+                            Log.e(LOG_TAG, "BLENetworkObserverService: Error to reduce data in ScanResults. ${e.message}")
+                        }
 
-                            bleData.forEach { beacon ->
-                                scansResult.forEach { scan ->
-                                    if (scan.macAddress == beacon.macAddress && isValidBeacon(scan) && scan.distance <= distanceRange) {
-                                        beacon.name = beacon.name.orElse(scan.name)
-                                        beacon.distance = scan.distance
-                                        beacon.rssi = scan.rssi
-                                        beacon.observeCount = beacon.observeCount + 1
-                                        beacon.percent = (beacon.observeCount * 100) / timeToObserve.toDouble()
+                        try {
+
+                            beaconBundle?.distanceRange?.let { distanceRange ->
+
+                                bleData.forEach { beacon ->
+                                    scansResult.forEach { scan ->
+                                        if (scan.macAddress == beacon.macAddress && isValidBeacon(scan) && scan.distance <= distanceRange) {
+                                            beacon.name = beacon.name.orElse(scan.name)
+                                            beacon.distance = scan.distance
+                                            beacon.rssi = scan.rssi
+                                            beacon.observeCount = beacon.observeCount + 1
+                                            beacon.percent = (beacon.observeCount * 100) / timeToObserve.toDouble()
+                                        }
                                     }
-                                }
 
-                                if (!observerHistory.containsKey(beacon.macAddress)) {
-                                    observerHistory[beacon.macAddress] = ArrayList()
-                                }
+                                    if (!observerHistory.containsKey(beacon.macAddress)) {
+                                        observerHistory[beacon.macAddress] = ArrayList()
+                                    }
 
-                                observerHistory[beacon.macAddress]?.add(beacon)
-                                Log.d(LOG_TAG, "BLENetworkObserverService: TOKEN $observerToken | ITERATION $observedTime | BEACON = $beacon")
+                                    observerHistory[beacon.macAddress]?.add(beacon)
+                                    Log.d(LOG_TAG, "BLENetworkObserverService: TOKEN $observerToken | ITERATION $observedTime | BEACON = $beacon")
+                                }
                             }
-
+                        } catch (e : Exception) {
+                            Log.e(LOG_TAG, "BLENetworkObserverService: Error to map ScanResults. Ignore results. ${e.message}")
                         }
-
-                        sleepThread(sleepTime) {
-                            bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
-                            bundle.putSerializable(OBSERVED_HISTORY, observerHistory)
-
-                            networkResultReceiver?.send(NetworkResultStatus.FAIL.value, bundle)
-                            XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS FAIL")
-                        }
-
-                        observedTime++
                     }
                 }
             }
+
+            Log.d(LOG_TAG, "BLENetworkObserverService: TOKEN $observerToken | ITERATION $observedTime")
+
+            sleepThread(sleepTime) {
+                bundle.putParcelableArrayList(BLE_SCANNED, ArrayList(bleData))
+                bundle.putSerializable(OBSERVED_HISTORY, observerHistory)
+
+                networkResultReceiver?.send(NetworkResultStatus.FAIL.value, bundle)
+                XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS FAIL")
+            }
+
+            observedTime++
+
         }
 
         XLog.d("BLENetworkObserverService: ${getActualDateString()} | SERVICE OBSERVER ENDS | STATUS SUCCESS")
@@ -215,11 +237,6 @@ class BLENetworkObserverService : Service(), Runnable {
 
     private fun scanCallback() : ScanCallback = object : ScanCallback() {
 
-        override fun onBatchScanResults(results: MutableList<ScanResult>?) {
-            Log.d(LOG_TAG, "ScanCallback: HAS BATCH ${results?.size}")
-            super.onBatchScanResults(results)
-        }
-
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result?.run {
 
@@ -235,8 +252,6 @@ class BLENetworkObserverService : Service(), Runnable {
                         distance = distance
                 )
 
-                Log.d(LOG_TAG, "ScanCallback: HAS RESULT | $beacon")
-
                 scanResults.add(beacon)
             }
         }
@@ -246,26 +261,35 @@ class BLENetworkObserverService : Service(), Runnable {
 
             Log.d(LOG_TAG, "ScanCallback: DISABLING BLUETOOTH AND WAIT 12 SECONDS TO ENABLED AGAIN")
 
-            BluetoothAdapter.getDefaultAdapter().run {
-                if (disable()) {
-                    sleepThread(TWELVE_SECONDS)
-                    enable()
+            try {
+                BluetoothAdapter.getDefaultAdapter().run {
+                    if (disable()) {
+                        sleepThread(TWELVE_SECONDS)
+                        enable()
+                    }
                 }
+            } catch (e : Exception) {
+                Log.e(LOG_TAG, "ScanCallback: Error to restart Bluetooth.")
             }
         }
     }
 
     // UPDATE BLE
     private fun adapterUpdateAfterEveryOneHour() {
-        if (((System.currentTimeMillis() - startTime) % 3_600_000) == 0L) {
-            // make something to back to work after one hour
+        try {
+            if (((System.currentTimeMillis() - startTime) % 3_360_000) == 0L) {
+                // make something to back to work after 55 minutes
 
-            BluetoothAdapter.getDefaultAdapter().run {
-                if (disable()) {
-                    sleepThread(TWELVE_SECONDS)
-                    enable()
+                BluetoothAdapter.getDefaultAdapter().run {
+                    if (disable()) {
+                        sleepThread(TWELVE_SECONDS)
+                        enable()
+                        sleepThread(TWELVE_SECONDS)
+                    }
                 }
             }
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "BLENetworkObserverService: Error to restart Bluetooth.")
         }
     }
 

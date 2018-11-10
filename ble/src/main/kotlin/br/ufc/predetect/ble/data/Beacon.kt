@@ -10,8 +10,9 @@ data class Beacon(
         var distance: Double = 0.0,
         var rssi: Int = 0,
         var observeCount: Int = 0,
-        var percent: Double = 0.0
-) : Parcelable {
+        var percent: Double = 0.0,
+        var iterationExecuted : Int = 0
+) : Parcelable, Comparator<Beacon> {
 
     constructor(parcel: Parcel) : this(
             parcel.readString(),
@@ -20,7 +21,8 @@ data class Beacon(
             parcel.readDouble(),
             parcel.readInt(),
             parcel.readInt(),
-            parcel.readDouble())
+            parcel.readDouble(),
+            parcel.readInt())
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(macAddress)
@@ -29,6 +31,7 @@ data class Beacon(
         parcel.writeInt(rssi)
         parcel.writeInt(observeCount)
         parcel.writeDouble(percent)
+        parcel.writeInt(iterationExecuted)
     }
 
     override fun describeContents(): Int = 0
@@ -50,6 +53,15 @@ data class Beacon(
 
         val data: Beacon = other
         return data.macAddress.equals(macAddress, ignoreCase = true)
+    }
+
+    override fun compare(b1: Beacon?, b2: Beacon?): Int {
+        if (b1 == null)
+            return 1
+        if (b2 == null)
+            return -1
+        return b1.macAddress.toUpperCase()
+                .compareTo(b2.macAddress.toUpperCase())
     }
 
 }

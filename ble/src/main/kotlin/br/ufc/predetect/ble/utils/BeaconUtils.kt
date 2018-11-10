@@ -8,6 +8,7 @@ import br.ufc.predetect.ble.data.Beacon
 import br.ufc.predetect.ble.data.BeaconBundle
 import br.ufc.predetect.ble.filters.KalmanFilter
 import br.ufc.quixada.predetect.common.utils.toByteArray
+import java.util.concurrent.ConcurrentLinkedQueue
 
 
 fun filterBeacon(advertisingPackets : List<Beacon>) : Beacon {
@@ -26,23 +27,24 @@ fun filterBeacon(advertisingPackets : List<Beacon>) : Beacon {
     )
 }
 
-fun reduceScanResults(scanResults: List<Beacon>) : List<Beacon> = scanResults
-        .groupBy { it.macAddress }
-        .map { it ->
-            val first = it.value.first()
-            val rssFiltered = KalmanFilter().filter(it.value.map { it.rssi }).toInt()
-            val distanceFiltered = rssiToDistance(rssFiltered)
+ fun reduceScanResults(scanResults: ConcurrentLinkedQueue<Beacon>) : List<Beacon> =
+    scanResults
+            .groupBy { it.macAddress }
+            .map { it ->
+                val first = it.value.first()
+                val rssFiltered = KalmanFilter().filter(it.value.map { it.rssi }).toInt()
+                val distanceFiltered = rssiToDistance(rssFiltered)
 
-            Log.d(LOG_TAG, "DISTANCE FILTERED: $distanceFiltered")
-            Log.d(LOG_TAG, "RSS FILTERED: $rssFiltered")
+                Log.d(LOG_TAG, "DISTANCE FILTERED: $distanceFiltered")
+                Log.d(LOG_TAG, "RSS FILTERED: $rssFiltered")
 
-            Beacon(
-                    macAddress = it.key,
-                    name = first.name,
-                    rssi = rssFiltered,
-                    distance = distanceFiltered
-            )
-        }
+                Beacon(
+                        macAddress = it.key,
+                        name = first.name,
+                        rssi = rssFiltered,
+                        distance = distanceFiltered
+                )
+            }
 
 
 fun createBeaconBundle(data: List<String>, duration: Long, distance: Double): ByteArray =
