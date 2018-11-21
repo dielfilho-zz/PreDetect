@@ -104,7 +104,7 @@ class BLENetworkObserverService : Service(), Runnable {
                         Log.d(LOG_TAG, "BLENetworkObserverService: START SCAN")
                         this.startScan(emptyList(), scanSettings(), scanCallback)
 
-                        sleepThread(TWELVE_SECONDS)
+                        sleepThread(TWELVE_SECONDS * 2)
 
                         Log.d(LOG_TAG, "BLENetworkObserverService: STOP SCAN")
                         this.stopScan(scanCallback)
