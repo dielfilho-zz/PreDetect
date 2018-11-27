@@ -9,6 +9,7 @@ import br.ufc.predetect.ble.constants.BLE_BUNDLE
 import br.ufc.predetect.ble.constants.LOG_TAG
 import br.ufc.predetect.ble.services.BLENetworkObserverService
 import br.ufc.predetect.ble.utils.createBeaconBundle
+import br.ufc.quixada.predetect.common.utils.SLEEP_TIME
 import br.ufc.quixada.predetect.common.utils.TOKEN_OBSERVER
 import java.util.*
 
@@ -28,9 +29,11 @@ class BLEObservingReceiver : BroadcastReceiver() {
                     Log.d(LOG_TAG, "BLEObservingReceiver: $token")
 
                     val btMACsToObserve : List<String> = intent.getStringArrayListExtra("btMACsToObserve")
-                    val timeInMinutes : Int = intent.getIntExtra("timeInMinutes", 1)
+                    val timeInMinutes : Int = intent.getIntExtra("timeInMinutes", 30)
                     val maxRangeInMeters : Double = intent.getDoubleExtra("maxRangeInMeters", 10.0)
+                    val intervalTimeInMinutes : Int = intent.getIntExtra("intervalTimeInMinutes", 10)
 
+                    serviceIntent.putExtra(SLEEP_TIME, intervalTimeInMinutes * sleepTimeOneMinute)
                     serviceIntent.putExtra(BLE_BUNDLE, createBeaconBundle(btMACsToObserve, timeInMinutes * sleepTimeOneMinute, maxRangeInMeters))
 
                     ctx.startService(serviceIntent)
