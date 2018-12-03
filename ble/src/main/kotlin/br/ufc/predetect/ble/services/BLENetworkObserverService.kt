@@ -50,6 +50,7 @@ class BLENetworkObserverService : Service(), Runnable {
     companion object {
         var bleData = ConcurrentLinkedQueue<Beacon>()
         var scanResults = ConcurrentLinkedQueue<Beacon>()
+        var isUpdated = false
 
         private const val TWELVE_SECONDS = 12_000L
         private const val TWO_SECONDS = 2_000L
@@ -101,6 +102,7 @@ class BLENetworkObserverService : Service(), Runnable {
 
                         val scanCallback = scanCallback()
 
+                        isUpdated = false
                         Log.d(LOG_TAG, "BLENetworkObserverService: START SCAN")
                         this.startScan(emptyList(), scanSettings(), scanCallback)
 
@@ -108,6 +110,8 @@ class BLENetworkObserverService : Service(), Runnable {
 
                         Log.d(LOG_TAG, "BLENetworkObserverService: STOP SCAN")
                         this.stopScan(scanCallback)
+
+                        if (!isUpdated) restartBT()
 
                         sleepThread(TWO_SECONDS)
 
@@ -253,6 +257,9 @@ class BLENetworkObserverService : Service(), Runnable {
                 )
 
                 scanResults.add(beacon)
+
+                isUpdated = true
+
             }
         }
 
@@ -279,20 +286,24 @@ class BLENetworkObserverService : Service(), Runnable {
         try {
             if (((System.currentTimeMillis() - startTime) % 3_360_000) == 0L) {
                 // make something to back to work after 55 minutes
-
-                BluetoothAdapter.getDefaultAdapter().run {
-                    if (disable()) {
-                        sleepThread(TWELVE_SECONDS)
-                        enable()
-                        sleepThread(TWELVE_SECONDS)
-                    }
-                }
+                restartBT()
             }
         } catch (e: Exception) {
             Log.e(LOG_TAG, "BLENetworkObserverService: Error to restart Bluetooth.")
         }
     }
 
+    private fun restartBT() {
+
+        BluetoothAdapter.getDefaultAdapter().run {
+            if (disable()) {
+                sleepThread(TWELVE_SECONDS)
+                enable()
+                sleepThread(TWELVE_SECONDS)
+            }
+        }
+
+    }
     // WAKE LOCK
 
     private fun holdBLeLock() {

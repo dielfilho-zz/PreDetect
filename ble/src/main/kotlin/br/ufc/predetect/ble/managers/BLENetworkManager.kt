@@ -15,7 +15,6 @@ import br.ufc.predetect.ble.constants.RESULT_RECEIVER
 import br.ufc.predetect.ble.data.Beacon
 import br.ufc.predetect.ble.interfaces.BeaconListener
 import br.ufc.predetect.ble.interfaces.BeaconObserver
-import br.ufc.predetect.ble.managers.BeaconRepository.beaconsBatch
 import br.ufc.predetect.ble.receivers.BLENetworkResultReceiver
 import br.ufc.predetect.ble.services.BLENetworkObserverService
 import br.ufc.predetect.ble.utils.*
@@ -38,6 +37,7 @@ object BLENetworkManager : NetworkReceiver {
 
     private val scanCallback = scanCallback()
     private val listeners: MutableList<BeaconListener>? = mutableListOf()
+    private var beaconsBatch : HashMap<String, MutableList<Beacon>> = hashMapOf()
 
     init {
         startXLogger()
@@ -214,4 +214,5 @@ object BLENetworkManager : NetworkReceiver {
     }
 
     private fun notifyWiFiListeners(wifiData: List<Beacon>) = listeners?.forEach { it.onChange(wifiData) }
+
 }

@@ -34,13 +34,15 @@ class BLEActivity : AppCompatActivity()
         // REGISTER TO RECEIVE DATA FROM BLE NETWORK
         BLENetworkManager.registerListener(this)
 
+        NotificationCreator.create(this, "Observe Network", "Start observer")
+
         AsyncTask.execute {
             tokenFromObserverNetwork = BLENetworkManager.observeNetwork(
                     this,
                     listOf("F0:C7:7F:EB:89:5E", "gg:cc:aa:bb:dd:ee"),
-                    200,
+                    10,
                     10.0,
-                    10
+                    1
             )
         }
 
@@ -62,6 +64,10 @@ class BLEActivity : AppCompatActivity()
 
                     // TOKEN FROM OBSERVER
                     Log.i(LOG_BLE_OBSERVER, networkResult.token)
+
+                    runOnUiThread {
+                        NotificationCreator.create(this, "Success Observe Ends", "${networkResult.token} | $it")
+                    }
                 }
                 .onFail {
                     Log.i(LOG_BLE_OBSERVER, "FAIL CONTEXT")
