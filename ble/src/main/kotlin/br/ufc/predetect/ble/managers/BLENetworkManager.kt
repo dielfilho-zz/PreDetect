@@ -205,7 +205,7 @@ object BLENetworkManager : NetworkReceiver {
         if (updateListeners) {
             Log.d(LOG_TAG, "NOTIFY LISTENERS AND WAIT $timeToWaitInMillis MILLISECONDS")
 
-            notifyWiFiListeners(beaconsBatch.values.map { filterBeacon(it) }.toList())
+            notifyListeners(beaconsBatch.values.map { filterBeacon(it) }.toList())
 
             beaconsBatch.clear()
 
@@ -213,6 +213,6 @@ object BLENetworkManager : NetworkReceiver {
         }
     }
 
-    private fun notifyWiFiListeners(wifiData: List<Beacon>) = listeners?.forEach { it.onChange(wifiData) }
+    private fun notifyListeners(data: List<Beacon>) = listeners?.forEach { it.onChange(data) }
 
 }
